@@ -374,6 +374,8 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
               : null,
       'projectType': List<String>.from(_selectedProjectTypes),
       'projectStatus': _isMaintenance ? 'maintenance' : 'ongoing',
+      'createdAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
     };
 
     print(jsonEncode(data));

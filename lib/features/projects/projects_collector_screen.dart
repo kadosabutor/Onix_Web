@@ -16,12 +16,15 @@ class Projectscollectorscreen extends StatefulWidget {
       _ProjectscollectorscreenState();
 }
 
+enum SortOption { projectName, lastModified }
+
 class _ProjectscollectorscreenState extends State<Projectscollectorscreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   List<QueryDocumentSnapshot<Map<String, dynamic>>> _allProjects = [];
   final GlobalKey<ExpandableFabState> _expandableFabKey =
       GlobalKey<ExpandableFabState>();
+  SortOption _selectedSortOption = SortOption.projectName;
 
   @override
   void initState() {
@@ -41,7 +44,7 @@ class _ProjectscollectorscreenState extends State<Projectscollectorscreen>
       body: SafeArea(
         minimum: EdgeInsets.all(8),
         child: Column(
-          spacing: 16,
+          spacing: 8,
           children: [
             SearchAnchor.bar(
               onClose: () => FocusScope.of(context).unfocus(),
@@ -107,6 +110,36 @@ class _ProjectscollectorscreenState extends State<Projectscollectorscreen>
                   );
                 }).toList();
               },
+            ),
+
+            // Rendezési chip-ek
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                ChoiceChip(
+                  label: Text('Név szerint'),
+                  selected: _selectedSortOption == SortOption.projectName,
+                  onSelected: (selected) {
+                    if (selected) {
+                      setState(() {
+                        _selectedSortOption = SortOption.projectName;
+                      });
+                    }
+                  },
+                ),
+                ChoiceChip(
+                  label: Text('Utolsó módosítás'),
+                  selected: _selectedSortOption == SortOption.lastModified,
+                  onSelected: (selected) {
+                    if (selected) {
+                      setState(() {
+                        _selectedSortOption = SortOption.lastModified;
+                      });
+                    }
+                  },
+                ),
+              ],
             ),
 
             Expanded(
@@ -183,12 +216,48 @@ class _ProjectscollectorscreenState extends State<Projectscollectorscreen>
                             final allDocs = snapshot.data?.docs ?? [];
                             _allProjects = allDocs;
 
+                            // Rendezés alkalmazása
+                            final sortedDocs = List<
+                              QueryDocumentSnapshot<Map<String, dynamic>>
+                            >.from(allDocs);
+                            sortedDocs.sort((a, b) {
+                              final dataA = a.data();
+                              final dataB = b.data();
+
+                              if (_selectedSortOption ==
+                                  SortOption.projectName) {
+                                final nameA =
+                                    (dataA['projectName'] ?? '')
+                                        .toString()
+                                        .toLowerCase();
+                                final nameB =
+                                    (dataB['projectName'] ?? '')
+                                        .toString()
+                                        .toLowerCase();
+                                return nameA.compareTo(nameB);
+                              } else {
+                                // Utolsó módosítás szerint
+                                final updatedAtA =
+                                    dataA['updatedAt'] as Timestamp?;
+                                final updatedAtB =
+                                    dataB['updatedAt'] as Timestamp?;
+
+                                if (updatedAtA == null && updatedAtB == null)
+                                  return 0;
+                                if (updatedAtA == null) return 1;
+                                if (updatedAtB == null) return -1;
+
+                                // Újabb dátum előrébb (csökkenő sorrend)
+                                return updatedAtB.compareTo(updatedAtA);
+                              }
+                            });
+
                             return TabBarView(
                               controller: _tabController,
                               children: [
-                                buildProjectList(allDocs, "ongoing"),
-                                buildProjectList(allDocs, "done"),
-                                buildProjectList(allDocs, "maintenance"),
+                                buildProjectList(sortedDocs, "ongoing"),
+                                buildProjectList(sortedDocs, "done"),
+                                buildProjectList(sortedDocs, "maintenance"),
                               ],
                             );
                           },

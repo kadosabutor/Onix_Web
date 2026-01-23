@@ -172,6 +172,11 @@ class EditWorklogBottomSheetState extends State<EditWorklogBottomSheet> {
             'description': _descriptionController.text.trim(),
           });
 
+      await FirebaseFirestore.instance
+          .collection('projects')
+          .doc(widget.projectId)
+          .update({'updatedAt': FieldValue.serverTimestamp()});
+
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -227,6 +232,11 @@ class EditWorklogBottomSheetState extends State<EditWorklogBottomSheet> {
           .collection('worklog')
           .doc(widget.doc.id)
           .delete();
+
+      await FirebaseFirestore.instance
+          .collection('projects')
+          .doc(widget.projectId)
+          .update({'updatedAt': FieldValue.serverTimestamp()});
 
       if (!mounted) return;
 

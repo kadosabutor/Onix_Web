@@ -11,6 +11,7 @@ import 'package:okoskert_internal/features/auth/login_screen.dart';
 import 'package:okoskert_internal/features/auth/create_new_workspace_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:toastification/toastification.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -49,161 +50,167 @@ class MainApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
-    return MaterialApp(
-      themeMode: themeProvider.themeMode,
-      builder:
-          (context, child) => MediaQuery(
-            data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
-            child: child!,
+    return ToastificationWrapper(
+      child: MaterialApp(
+        themeMode: themeProvider.themeMode,
+        builder:
+            (context, child) => MediaQuery(
+              data: MediaQuery.of(
+                context,
+              ).copyWith(alwaysUse24HourFormat: true),
+              child: child!,
+            ),
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: Colors.lightGreen,
+            brightness: Brightness.light,
           ),
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.lightGreen,
-          brightness: Brightness.light,
+          useMaterial3: true,
         ),
-        useMaterial3: true,
-      ),
-      darkTheme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.lightGreen,
-          brightness: Brightness.dark,
+        darkTheme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: Colors.lightGreen,
+            brightness: Brightness.dark,
+          ),
+          useMaterial3: true,
         ),
-        useMaterial3: true,
-      ),
-      home: StreamBuilder<User?>(
-        stream: FirebaseAuth.instance.authStateChanges(),
-        builder: (context, authSnapshot) {
-          if (authSnapshot.connectionState == ConnectionState.waiting) {
-            return const Scaffold(
-              body: Center(child: CircularProgressIndicator()),
-            );
-          }
-          final user = authSnapshot.data;
-          if (user == null) {
-            return const LoginScreen();
-          }
+        home: StreamBuilder<User?>(
+          stream: FirebaseAuth.instance.authStateChanges(),
+          builder: (context, authSnapshot) {
+            if (authSnapshot.connectionState == ConnectionState.waiting) {
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              );
+            }
+            final user = authSnapshot.data;
+            if (user == null) {
+              return const LoginScreen();
+            }
 
-          // Ellenőrizzük a felhasználó adatait a Firestore-ból (uid alapján)
-          return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-            stream:
-                FirebaseFirestore.instance
-                    .collection('users')
-                    .doc(user.uid)
-                    .snapshots(),
-            builder: (context, userSnapshot) {
-              if (userSnapshot.connectionState == ConnectionState.waiting) {
-                return const Scaffold(
-                  body: Center(child: CircularProgressIndicator()),
-                );
-              }
+            // Ellenőrizzük a felhasználó adatait a Firestore-ból (uid alapján)
+            return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+              stream:
+                  FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(user.uid)
+                      .snapshots(),
+              builder: (context, userSnapshot) {
+                if (userSnapshot.connectionState == ConnectionState.waiting) {
+                  return const Scaffold(
+                    body: Center(child: CircularProgressIndicator()),
+                  );
+                }
 
-              // Ha nincs dokumentum, navigáljunk a LoginScreen-re
-              if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
-                return const LoginScreen();
-              }
+                // Ha nincs dokumentum, navigáljunk a LoginScreen-re
+                if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
+                  return const LoginScreen();
+                }
 
-              final userData = userSnapshot.data!.data();
-              if (userData == null) {
-                return const LoginScreen();
-              }
+                final userData = userSnapshot.data!.data();
+                if (userData == null) {
+                  return const LoginScreen();
+                }
 
-              final teamId = userData['teamId'];
-              final roleNumber = userData['role'];
+                final teamId = userData['teamId'];
+                final roleNumber = userData['role'];
 
-              // Ha nincs érvényes teamId, navigáljunk a CreateNewWorkspaceScreen-re
-              if ((teamId == null || teamId == '') && roleNumber == 1) {
-                return const CreateNewWorkspaceScreen();
-              }
+                // Ha nincs érvényes teamId, navigáljunk a CreateNewWorkspaceScreen-re
+                if ((teamId == null || teamId == '') && roleNumber == 1) {
+                  return const CreateNewWorkspaceScreen();
+                }
 
-              if (roleNumber == null || roleNumber == '') {
-                return Scaffold(
-                  body: Center(
-                    child: SingleChildScrollView(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24.0),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Card(
-                              elevation: 2,
-                              child: Padding(
-                                padding: const EdgeInsets.all(32.0),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.pending_actions,
-                                      size: 64,
-                                      color:
-                                          Theme.of(context).colorScheme.primary,
-                                    ),
-                                    const SizedBox(height: 24),
-                                    Text(
-                                      'Várakozás a jóváhagyásra',
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.headlineSmall?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                    const SizedBox(height: 16),
-                                    Text(
-                                      'A munkatér létrehozója hamarosan elfogadja a kérelmed és hozzárendel egy szerepkört.',
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.bodyLarge?.copyWith(
+                if (roleNumber == null || roleNumber == '') {
+                  return Scaffold(
+                    body: Center(
+                      child: SingleChildScrollView(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24.0),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Card(
+                                elevation: 2,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(32.0),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.pending_actions,
+                                        size: 64,
                                         color:
                                             Theme.of(
                                               context,
-                                            ).colorScheme.onSurfaceVariant,
+                                            ).colorScheme.primary,
                                       ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                    const SizedBox(height: 32),
-                                    const SizedBox(
-                                      width: 24,
-                                      height: 24,
-                                      child: CupertinoActivityIndicator(
-                                        radius: 12,
+                                      const SizedBox(height: 24),
+                                      Text(
+                                        'Várakozás a jóváhagyásra',
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.headlineSmall?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        textAlign: TextAlign.center,
                                       ),
-                                    ),
-                                    const SizedBox(height: 32),
-                                    TextButton.icon(
-                                      onPressed: () async {
-                                        await FirebaseAuth.instance.signOut();
-                                      },
-                                      icon: const Icon(Icons.logout),
-                                      label: const Text('Kijelentkezés'),
-                                      style: OutlinedButton.styleFrom(
-                                        minimumSize: const Size(
-                                          double.infinity,
-                                          48,
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        'A munkatér létrehozója hamarosan elfogadja a kérelmed és hozzárendel egy szerepkört.',
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.bodyLarge?.copyWith(
+                                          color:
+                                              Theme.of(
+                                                context,
+                                              ).colorScheme.onSurfaceVariant,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                      const SizedBox(height: 32),
+                                      const SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        child: CupertinoActivityIndicator(
+                                          radius: 12,
                                         ),
                                       ),
-                                    ),
-                                  ],
+                                      const SizedBox(height: 32),
+                                      TextButton.icon(
+                                        onPressed: () async {
+                                          await FirebaseAuth.instance.signOut();
+                                        },
+                                        icon: const Icon(Icons.logout),
+                                        label: const Text('Kijelentkezés'),
+                                        style: OutlinedButton.styleFrom(
+                                          minimumSize: const Size(
+                                            double.infinity,
+                                            48,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                );
-              }
+                  );
+                }
 
-              // Mentjük a teamId-t és role-t SharedPreferences-be
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                _saveUserPreferences(teamId, roleNumber);
-              });
+                // Mentjük a teamId-t és role-t SharedPreferences-be
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  _saveUserPreferences(teamId, roleNumber);
+                });
 
-              return const HomePage();
-            },
-          );
-        },
+                return const HomePage();
+              },
+            );
+          },
+        ),
       ),
     );
   }

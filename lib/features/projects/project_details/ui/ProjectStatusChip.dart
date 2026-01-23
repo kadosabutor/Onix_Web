@@ -168,7 +168,10 @@ class _ProjectStatusChipState extends State<ProjectStatusChip> {
       await FirebaseFirestore.instance
           .collection('projects')
           .doc(widget.projectId)
-          .update({'projectStatus': newStatus});
+          .update({
+            'projectStatus': newStatus,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
 
       if (!mounted) return;
 

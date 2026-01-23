@@ -372,344 +372,355 @@ class _AddMaterialScreenState extends State<AddMaterialScreen> {
   @override
   Widget build(BuildContext context) {
     final isEditMode = widget.materialId != null;
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          isEditMode ? 'Alapanyag szerkesztése' : 'Alapanyag hozzáadása',
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(
+            isEditMode ? 'Alapanyag szerkesztése' : 'Alapanyag hozzáadása',
+          ),
         ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            spacing: 16,
-            children: [
-              TextFormField(
-                controller: _nameController,
-                textCapitalization: TextCapitalization.words,
-                decoration: const InputDecoration(
-                  labelText: 'Alapanyag neve',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Az alapanyag neve kötelező';
-                  }
-                  return null;
-                },
-              ),
-              if (_isLoadingProjects)
-                const Center(child: CircularProgressIndicator())
-              else
-                DropdownButtonFormField<String?>(
-                  value: _selectedProjectId,
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Form(
+            key: _formKey,           
+            child: Column(
+              spacing: 16,
+              children: [
+                TextFormField(
+                  controller: _nameController,
+                  textCapitalization: TextCapitalization.words,
                   decoration: const InputDecoration(
-                    labelText: 'Projekt',
+                    labelText: 'Alapanyag neve',
                     border: OutlineInputBorder(),
                   ),
-                  items: [
-                    const DropdownMenuItem<String?>(
-                      value: null,
-                      child: Text('Nincs projekt kiválasztva'),
-                    ),
-                    ..._projects.map((project) {
-                      return DropdownMenuItem<String?>(
-                        value: project['id'],
-                        child: Text(project['name']!),
-                      );
-                    }),
-                  ],
-                  onChanged: (String? newValue) {
-                    setState(() {
-                      _selectedProjectId = newValue;
-                    });
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Az alapanyag neve kötelező';
+                    }
+                    return null;
                   },
                 ),
-              TextFormField(
-                controller: _dateController,
-                readOnly: true,
-                decoration: InputDecoration(
-                  labelText: 'Dátum',
-                  border: const OutlineInputBorder(),
-                  suffixIcon: const Icon(Icons.calendar_today),
+                if (_isLoadingProjects)
+                  const Center(child: CircularProgressIndicator())
+                else
+                  DropdownButtonFormField<String?>(
+                    initialValue: _selectedProjectId,
+                    decoration: const InputDecoration(
+                      labelText: 'Projekt',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: [
+                      const DropdownMenuItem<String?>(
+                        value: null,
+                        child: Text('Nincs projekt kiválasztva'),
+                      ),
+                      ..._projects.map((project) {
+                        return DropdownMenuItem<String?>(
+                          value: project['id'],
+                          child: Text(project['name']!),
+                        );
+                      }),
+                    ],
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        _selectedProjectId = newValue;
+                      });
+                    },
+                  ),
+                TextFormField(
+                  controller: _dateController,
+                  readOnly: true,
+                  decoration: InputDecoration(
+                    labelText: 'Dátum',
+                    border: const OutlineInputBorder(),
+                    suffixIcon: const Icon(Icons.calendar_today),
+                  ),
+                  onTap: _selectDate,
                 ),
-                onTap: _selectDate,
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Quantity field takes more space, unit just enough
-                  Expanded(
-                    flex: 2,
-                    child: Padding(
-                      padding: const EdgeInsets.only(right: 8.0),
-                      child: TextFormField(
-                        controller: _quantityController,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Quantity field takes more space, unit just enough
+                    Expanded(
+                      flex: 2,
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: TextFormField(
+                          controller: _quantityController,
+                          decoration: const InputDecoration(
+                            labelText: 'Mennyiség',
+                            border: OutlineInputBorder(),
+                          ),
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(
+                              RegExp(r'^\d+\.?\d*'),
+                            ),
+                          ],
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'A mennyiség kötelező';
+                            }
+                            if (double.tryParse(
+                                  value.trim().replaceAll(',', '.'),
+                                ) ==
+                                null) {
+                              return 'Kérjük, érvényes számot adjon meg';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 1,
+                      child: DropdownButtonFormField<String>(
+                        value: _selectedUnit,
                         decoration: const InputDecoration(
-                          labelText: 'Mennyiség',
+                          labelText: 'Mértékegység',
                           border: OutlineInputBorder(),
                         ),
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(
-                            RegExp(r'^\d+\.?\d*'),
-                          ),
-                        ],
+                        items:
+                            _units.map((String unit) {
+                              return DropdownMenuItem<String>(
+                                value: unit,
+                                child: Text(unit),
+                              );
+                            }).toList(),
+                        onChanged: (String? newValue) {
+                          setState(() {
+                            _selectedUnit = newValue;
+                          });
+                        },
                         validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'A mennyiség kötelező';
-                          }
-                          if (double.tryParse(
-                                value.trim().replaceAll(',', '.'),
-                              ) ==
-                              null) {
-                            return 'Kérjük, érvényes számot adjon meg';
+                          if (value == null || value.isEmpty) {
+                            return 'Kérjük, válasszon mértékegységet';
                           }
                           return null;
                         },
                       ),
                     ),
-                  ),
-                  Expanded(
-                    flex: 1,
-                    child: DropdownButtonFormField<String>(
-                      value: _selectedUnit,
-                      decoration: const InputDecoration(
-                        labelText: 'Mértékegység',
-                        border: OutlineInputBorder(),
-                      ),
-                      items:
-                          _units.map((String unit) {
-                            return DropdownMenuItem<String>(
-                              value: unit,
-                              child: Text(unit),
-                            );
-                          }).toList(),
-                      onChanged: (String? newValue) {
-                        setState(() {
-                          _selectedUnit = newValue;
-                        });
-                      },
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Kérjük, válasszon mértékegységet';
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              SizedBox(
-                width: double.infinity,
-                child: SegmentedButton<_PriceMode>(
-                  segments: const [
-                    ButtonSegment<_PriceMode>(
-                      value: _PriceMode.unitPrice,
-                      label: Text('Egység ár'),
-                      icon: Icon(Icons.calculate),
-                    ),
-                    ButtonSegment<_PriceMode>(
-                      value: _PriceMode.customPrice,
-                      label: Text('Egyedi ár'),
-                      icon: Icon(Icons.edit),
-                    ),
                   ],
-                  selected: {_priceMode},
-                  onSelectionChanged: (Set<_PriceMode> newSelection) {
-                    setState(() {
-                      _priceMode = newSelection.first;
-                      // Töröljük a másik mező értékét amikor váltunk
-                      if (_priceMode == _PriceMode.unitPrice) {
-                        _priceController.clear();
-                      } else {
-                        _unitPriceController.clear();
-                      }
-                    });
-                  },
                 ),
-              ),
-              if (_priceMode == _PriceMode.unitPrice)
-                TextFormField(
-                  controller: _unitPriceController,
-                  decoration: InputDecoration(
-                    labelText:
-                        _selectedUnit != null
-                            ? 'Egységár (HUF/${_selectedUnit}) (opcionális)'
-                            : 'Egységár (HUF) (opcionális)',
-                    border: const OutlineInputBorder(),
-                  ),
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*')),
-                  ],
-                  validator: (value) {
-                    // Az egységár opcionális
-                    if (value != null && value.trim().isNotEmpty) {
-                      if (double.tryParse(value.trim().replaceAll(',', '.')) ==
-                          null) {
-                        return 'Kérjük, érvényes számot adjon meg';
-                      }
-                    }
-                    return null;
-                  },
-                ),
-              if (_priceMode == _PriceMode.unitPrice)
-                Container(
+                const SizedBox(height: 8),
+                SizedBox(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(16.0),
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      color: Theme.of(context).colorScheme.outline,
-                    ),
-                    borderRadius: BorderRadius.circular(4.0),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Összesen',
-                        style: Theme.of(
-                          context,
-                        ).textTheme.labelMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                  child: SegmentedButton<_PriceMode>(
+                    segments: const [
+                      ButtonSegment<_PriceMode>(
+                        value: _PriceMode.unitPrice,
+                        label: Text('Egység ár'),
+                        icon: Icon(Icons.calculate),
                       ),
-                      const SizedBox(height: 4),
-                      ValueListenableBuilder<TextEditingValue>(
-                        valueListenable: _quantityController,
-                        builder: (context, quantityValue, child) {
-                          return ValueListenableBuilder<TextEditingValue>(
-                            valueListenable: _unitPriceController,
-                            builder: (context, unitPriceValue, child) {
-                              final quantityText = quantityValue.text.trim();
-                              final unitPriceText = unitPriceValue.text.trim();
-
-                              if (quantityText.isEmpty ||
-                                  unitPriceText.isEmpty) {
-                                return Text(
-                                  '0 HUF',
-                                  style: Theme.of(
-                                    context,
-                                  ).textTheme.headlineSmall?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color:
-                                        Theme.of(
-                                          context,
-                                        ).colorScheme.onSurfaceVariant,
-                                  ),
-                                );
-                              }
-
-                              final quantity = double.tryParse(
-                                quantityText.replaceAll(',', '.'),
-                              );
-                              final unitPrice = double.tryParse(
-                                unitPriceText.replaceAll(',', '.'),
-                              );
-
-                              if (quantity == null || unitPrice == null) {
-                                return Text(
-                                  '0 HUF',
-                                  style: Theme.of(
-                                    context,
-                                  ).textTheme.headlineSmall?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color:
-                                        Theme.of(
-                                          context,
-                                        ).colorScheme.onSurfaceVariant,
-                                  ),
-                                );
-                              }
-
-                              final totalPrice = quantity * unitPrice;
-                              final formattedPrice = _formatPrice(totalPrice);
-
-                              // Frissítjük a _priceController-t is a mentéshez
-                              if (!_isUpdatingPrice) {
-                                _isUpdatingPrice = true;
-                                _priceController.text = totalPrice
-                                    .toStringAsFixed(2);
-                                _isUpdatingPrice = false;
-                              }
-
-                              return Text(
-                                '$formattedPrice HUF',
-                                style: Theme.of(
-                                  context,
-                                ).textTheme.headlineSmall?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
-                              );
-                            },
-                          );
-                        },
+                      ButtonSegment<_PriceMode>(
+                        value: _PriceMode.customPrice,
+                        label: Text('Egyedi ár'),
+                        icon: Icon(Icons.edit),
                       ),
                     ],
+                    selected: {_priceMode},
+                    onSelectionChanged: (Set<_PriceMode> newSelection) {
+                      setState(() {
+                        _priceMode = newSelection.first;
+                        // Töröljük a másik mező értékét amikor váltunk
+                        if (_priceMode == _PriceMode.unitPrice) {
+                          _priceController.clear();
+                        } else {
+                          _unitPriceController.clear();
+                        }
+                      });
+                    },
                   ),
                 ),
-              if (_priceMode == _PriceMode.customPrice)
-                TextFormField(
-                  controller: _priceController,
-                  decoration: const InputDecoration(
-                    labelText: 'Összesen (HUF) (opcionális)',
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*')),
-                  ],
-                  validator: (value) {
-                    // Az ár opcionális
-                    if (value != null && value.trim().isNotEmpty) {
-                      if (double.tryParse(value.trim().replaceAll(',', '.')) ==
-                          null) {
-                        return 'Kérjük, érvényes számot adjon meg';
+                if (_priceMode == _PriceMode.unitPrice)
+                  TextFormField(
+                    controller: _unitPriceController,
+                    decoration: InputDecoration(
+                      labelText:
+                          _selectedUnit != null
+                              ? 'Egységár (HUF/${_selectedUnit}) (opcionális)'
+                              : 'Egységár (HUF) (opcionális)',
+                      border: const OutlineInputBorder(),
+                    ),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*')),
+                    ],
+                    validator: (value) {
+                      // Az egységár opcionális
+                      if (value != null && value.trim().isNotEmpty) {
+                        if (double.tryParse(
+                              value.trim().replaceAll(',', '.'),
+                            ) ==
+                            null) {
+                          return 'Kérjük, érvényes számot adjon meg';
+                        }
                       }
-                    }
-                    return null;
-                  },
-                ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: _isSaving ? null : _saveMaterial,
-                  style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                      return null;
+                    },
                   ),
-                  child:
-                      _isSaving
-                          ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
+                if (_priceMode == _PriceMode.unitPrice)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16.0),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.outline,
+                      ),
+                      borderRadius: BorderRadius.circular(4.0),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Összesen',
+                          style: Theme.of(
+                            context,
+                          ).textTheme.labelMedium?.copyWith(
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        ValueListenableBuilder<TextEditingValue>(
+                          valueListenable: _quantityController,
+                          builder: (context, quantityValue, child) {
+                            return ValueListenableBuilder<TextEditingValue>(
+                              valueListenable: _unitPriceController,
+                              builder: (context, unitPriceValue, child) {
+                                final quantityText = quantityValue.text.trim();
+                                final unitPriceText =
+                                    unitPriceValue.text.trim();
+
+                                if (quantityText.isEmpty ||
+                                    unitPriceText.isEmpty) {
+                                  return Text(
+                                    '0 HUF',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.headlineSmall?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color:
+                                          Theme.of(
+                                            context,
+                                          ).colorScheme.onSurfaceVariant,
+                                    ),
+                                  );
+                                }
+
+                                final quantity = double.tryParse(
+                                  quantityText.replaceAll(',', '.'),
+                                );
+                                final unitPrice = double.tryParse(
+                                  unitPriceText.replaceAll(',', '.'),
+                                );
+
+                                if (quantity == null || unitPrice == null) {
+                                  return Text(
+                                    '0 HUF',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.headlineSmall?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color:
+                                          Theme.of(
+                                            context,
+                                          ).colorScheme.onSurfaceVariant,
+                                    ),
+                                  );
+                                }
+
+                                final totalPrice = quantity * unitPrice;
+                                final formattedPrice = _formatPrice(totalPrice);
+
+                                // Frissítjük a _priceController-t is a mentéshez
+                                if (!_isUpdatingPrice) {
+                                  _isUpdatingPrice = true;
+                                  _priceController.text = totalPrice
+                                      .toStringAsFixed(2);
+                                  _isUpdatingPrice = false;
+                                }
+
+                                return Text(
+                                  '$formattedPrice HUF',
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.headlineSmall?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color:
+                                        Theme.of(context).colorScheme.primary,
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                if (_priceMode == _PriceMode.customPrice)
+                  TextFormField(
+                    controller: _priceController,
+                    decoration: const InputDecoration(
+                      labelText: 'Összesen (HUF) (opcionális)',
+                      border: OutlineInputBorder(),
+                    ),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*')),
+                    ],
+                    validator: (value) {
+                      // Az ár opcionális
+                      if (value != null && value.trim().isNotEmpty) {
+                        if (double.tryParse(
+                              value.trim().replaceAll(',', '.'),
+                            ) ==
+                            null) {
+                          return 'Kérjük, érvényes számot adjon meg';
+                        }
+                      }
+                      return null;
+                    },
+                  ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: _isSaving ? null : _saveMaterial,
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    child:
+                        _isSaving
+                            ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
+                            )
+                            : const Text(
+                              'Mentés',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
                               ),
                             ),
-                          )
-                          : const Text(
-                            'Mentés',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

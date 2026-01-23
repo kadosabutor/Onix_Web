@@ -13,7 +13,7 @@ class AddCalendarPostScreen extends StatefulWidget {
   final String? initialDescription;
   final List<String>? initialAssignedEmployees;
   final List<String>? initialAssignedProjects;
-
+  final List<Map<String, dynamic>>? initialSubtasks;
   const AddCalendarPostScreen({
     super.key,
     required this.selectedDate,
@@ -24,6 +24,7 @@ class AddCalendarPostScreen extends StatefulWidget {
     this.initialAssignedEmployees,
     this.initialAssignedProjects,
     this.initialPriority,
+    this.initialSubtasks,
   });
 
   @override
@@ -40,6 +41,8 @@ class AddCalendarPostScreenState extends State<AddCalendarPostScreen> {
   List<String> _assignedEmployees = [];
   List<String> _selectedProjectIds = [];
   List<Map<String, dynamic>> _projects = [];
+  List<Map<String, dynamic>> _subtasks = [];
+  final Map<String, TextEditingController> _subtaskControllers = {};
   bool _isLoadingProjects = false;
   bool _isSaving = false;
   bool _isDeleting = false;
@@ -53,6 +56,33 @@ class AddCalendarPostScreenState extends State<AddCalendarPostScreen> {
     );
     _selectedType = widget.initialType ?? 'Jegyzet';
     _selectedPriority = widget.initialPriority ?? 0;
+
+    // Részfeladatok betöltése
+    if (widget.initialSubtasks != null && widget.initialSubtasks!.isNotEmpty) {
+      _subtasks =
+          widget.initialSubtasks!.asMap().entries.map((entry) {
+            final index = entry.key;
+            final subtask = entry.value;
+            // Ha nincs id, generálunk egyet (index-et is használunk, hogy egyedi legyen)
+            if (!subtask.containsKey('id') || subtask['id'] == null) {
+              return {
+                ...subtask,
+                'id': '${DateTime.now().millisecondsSinceEpoch}_$index',
+              };
+            }
+            return subtask;
+          }).toList();
+
+      // TextEditingController-ek létrehozása a meglévő részfeladatokhoz
+      for (final subtask in _subtasks) {
+        final id = subtask['id'] as String;
+        final title = subtask['title'] as String? ?? '';
+        _subtaskControllers[id] = TextEditingController(text: title);
+      }
+    } else {
+      _subtasks = [];
+    }
+
     // Először próbáljuk az új mezőket (assignedEmployees, assignedProjects)
     // Ha nincsenek, akkor a régi mezőket (tags, projectId) használjuk (backward compatibility)
     _assignedEmployees =
@@ -134,10 +164,39 @@ class AddCalendarPostScreenState extends State<AddCalendarPostScreen> {
     }
   }
 
+  void _addSubtask() {
+    final String id = DateTime.now().millisecondsSinceEpoch.toString();
+    setState(() {
+      _subtasks.add({'id': id, 'title': '', 'status': 'ongoing'});
+      _subtaskControllers[id] = TextEditingController();
+    });
+  }
+
+  void _toggleSubtaskStatus(int index) {
+    setState(() {
+      final currentStatus = _subtasks[index]['status'] as String;
+      _subtasks[index]['status'] = currentStatus == 'done' ? 'ongoing' : 'done';
+    });
+  }
+
+  void _removeSubtask(int index) {
+    final subtask = _subtasks[index];
+    final id = subtask['id'] as String;
+    _subtaskControllers[id]?.dispose();
+    _subtaskControllers.remove(id);
+    setState(() {
+      _subtasks.removeAt(index);
+    });
+  }
+
   @override
   void dispose() {
     _descriptionController.dispose();
     _titleController.dispose();
+    for (final controller in _subtaskControllers.values) {
+      controller.dispose();
+    }
+    _subtaskControllers.clear();
     super.dispose();
   }
 
@@ -169,6 +228,18 @@ class AddCalendarPostScreenState extends State<AddCalendarPostScreen> {
         'assignedEmployees': _assignedEmployees,
         'assignedProjects': _selectedProjectIds,
         'priority': _selectedPriority,
+        'subtasks':
+            _subtasks
+                .map((subtask) {
+                  final id = subtask['id'] as String;
+                  final controller = _subtaskControllers[id];
+                  return {
+                    'title': controller?.text.trim() ?? '',
+                    'status': subtask['status'] as String,
+                  };
+                })
+                .where((subtask) => subtask['title'].toString().isNotEmpty)
+                .toList(),
       };
 
       if (widget.eventId != null) {
@@ -766,15 +837,110 @@ class AddCalendarPostScreenState extends State<AddCalendarPostScreen> {
     );
   }
 
+  Widget _buildSubtasksSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 8),
+        Text('Részfeladatok', style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 8),
+        if (_subtasks.isNotEmpty) ...[
+          ListView.builder(
+            padding: EdgeInsets.zero,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _subtasks.length,
+            itemBuilder: (context, index) {
+              final subtask = _subtasks[index];
+              final id = subtask['id'] as String;
+              final status = subtask['status'] as String;
+              final isDone = status == 'done';
+              final controller =
+                  _subtaskControllers[id] ??= TextEditingController();
+
+              return Dismissible(
+                background: Container(
+                  color: Theme.of(context).colorScheme.primaryContainer,
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Icon(
+                          Icons.delete,
+                          color:
+                              Theme.of(context).colorScheme.onPrimaryContainer,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                direction: DismissDirection.endToStart,
+                key: Key(id),
+                child: ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
+                  leading: Checkbox(
+                    value: isDone,
+                    onChanged: (bool? value) {
+                      _toggleSubtaskStatus(index);
+                    },
+                  ),
+                  title: TextField(
+                    controller: controller,
+                    decoration: const InputDecoration(
+                      hintText: 'Részfeladat címe',
+                      border: InputBorder.none,
+                    ),
+                    style: TextStyle(
+                      decoration: isDone ? TextDecoration.lineThrough : null,
+                      color:
+                          isDone
+                              ? Theme.of(context).colorScheme.onSurfaceVariant
+                              : null,
+                    ),
+                  ),
+                ),
+                onDismissed: (direction) {
+                  _removeSubtask(index);
+                },
+              );
+            },
+          ),
+        ],
+        TextButton.icon(
+          onPressed: _addSubtask,
+          icon: const Icon(Icons.add, size: 20),
+          label: const Text('Részfeladat hozzáadása'),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        centerTitle: false,
         title: Text(
-          widget.eventId != null
-              ? 'Bejegyzés szerkesztése'
-              : 'Új bejegyzés hozzáadása',
+          widget.eventId != null ? 'Bejegyzés szerkesztése' : 'Új bejegyzés',
         ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child:
+                _isSaving || _isDeleting
+                    ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                    : FilledButton(
+                      onPressed: _saveEvent,
+                      child: const Text('Mentés'),
+                    ),
+          ),
+        ],
       ),
       body: GestureDetector(
         onTap: () {
@@ -823,27 +989,12 @@ class AddCalendarPostScreenState extends State<AddCalendarPostScreen> {
                   _buildSelectedEmployees(),
                   const Divider(),
                   _buildPrioritySelector(),
+                  const Divider(),
+                  _buildSubtasksSection(),
                 ],
               ),
             ),
           ),
-        ),
-      ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        child: FilledButton(
-          style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-          ),
-          onPressed: _isSaving || _isDeleting ? null : _saveEvent,
-          child:
-              _isSaving || _isDeleting
-                  ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                  : const Text('Mentés'),
         ),
       ),
     );

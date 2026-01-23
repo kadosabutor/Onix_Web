@@ -55,41 +55,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   void _showEventDetailsBottomSheet(Map<String, dynamic> event) {
-    final date = event['date'] as Timestamp?;
-    final eventDate = date?.toDate();
-
-    EventDetailsBottomSheet.show(
-      context,
-      event,
-      onEdit: () {
-        final selectedDate =
-            eventDate ?? _selectedDayNotifier.value ?? DateTime.now();
-        final assignedEmployees =
-            (event['assignedEmployees'] as List?)
-                ?.map((e) => e.toString())
-                .toList();
-        final assignedProjects =
-            (event['assignedProjects'] as List?)
-                ?.map((e) => e.toString())
-                .toList();
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder:
-                (context) => AddCalendarPostScreen(
-                  selectedDate: selectedDate,
-                  eventId: event['id'],
-                  initialType: event['type'],
-                  initialDescription: event['description'],
-                  initialTitle: event['title'],
-                  initialAssignedEmployees: assignedEmployees,
-                  initialAssignedProjects: assignedProjects,
-                  initialPriority: event['priority'],
-                ),
-          ),
-        );
-      },
-    );
+    EventDetailsBottomSheet.show(context, event);
   }
 
   @override

@@ -145,6 +145,75 @@ class _ProjectAddDataColleguesState extends State<ProjectAddDataCollegues> {
       }
     }
 
+    // Validáció: ellenőrizzük, hogy az adott dolgozóhoz és dátumhoz már létezik-e rekord
+    final worklogRef = FirebaseFirestore.instance
+        .collection('projects')
+        .doc(widget.projectId)
+        .collection('worklog');
+
+    final targetDate = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+    );
+    final targetDateTimestamp = Timestamp.fromDate(targetDate);
+
+    // Összegyűjtjük az összes létező rekordot
+    final recordsToDelete = <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+    final conflictingEntries = <int, String>{}; // index -> employeeId
+
+    for (var i = 0; i < _timeEntries.length; i++) {
+      final entry = _timeEntries[i];
+      final employeeId = entry['employeeId'] as String?;
+
+      if (employeeId == null) continue; // Ezt már ellenőriztük korábban
+
+      // Lekérdezzük, hogy létezik-e már rekord ezzel az employeeId-vel és dátummal
+      // A date mező Timestamp-ként van tárolva Firestore-ban
+      final existingRecords =
+          await worklogRef
+              .where('employeeName', isEqualTo: employeeId)
+              .where('date', isEqualTo: targetDateTimestamp)
+              .get();
+
+      if (existingRecords.docs.isNotEmpty) {
+        recordsToDelete.addAll(existingRecords.docs);
+        conflictingEntries[i] = employeeId;
+      }
+    }
+
+    // Ha vannak ütköző rekordok, megkérdezzük a felhasználót
+    if (recordsToDelete.isNotEmpty) {
+      if (!mounted) return;
+
+      final shouldOverwrite = await showDialog<bool>(
+        context: context,
+        builder:
+            (context) => AlertDialog(
+              title: const Text('Már létezik bejegyzés'),
+              content: Text(
+                conflictingEntries.length == 1
+                    ? 'A ${conflictingEntries.keys.first + 1}. időbejegyzéshez kiválasztott dolgozóhoz (${conflictingEntries.values.first}) már létezik munkanapló bejegyzés a kiválasztott napon (${_formatDate(_selectedDate)}).\n\nSzeretnéd felülírni a meglévő bejegyzést?'
+                    : '${conflictingEntries.length} időbejegyzéshez már léteznek munkanapló bejegyzések a kiválasztott napon (${_formatDate(_selectedDate)}).\n\nSzeretnéd cserélni a meglévő bejegyzéseket?',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('Mégse'),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: const Text('Csere'),
+                ),
+              ],
+            ),
+      );
+
+      if (shouldOverwrite != true) {
+        return; // A felhasználó nem szeretné felülírni
+      }
+    }
+
     try {
       final worklogRef = FirebaseFirestore.instance
           .collection('projects')
@@ -153,6 +222,13 @@ class _ProjectAddDataColleguesState extends State<ProjectAddDataCollegues> {
 
       // Batch write a jobb teljesítményért
       final batch = FirebaseFirestore.instance.batch();
+
+      // Ha felülírásra kerül sor, töröljük a meglévő rekordokat
+      if (recordsToDelete.isNotEmpty) {
+        for (final doc in recordsToDelete) {
+          batch.delete(doc.reference);
+        }
+      }
 
       for (final entry in _timeEntries) {
         final employeeId = entry['employeeId'] as String;
@@ -202,6 +278,10 @@ class _ProjectAddDataColleguesState extends State<ProjectAddDataCollegues> {
         batch.set(docRef, workLogData);
       }
 
+      await FirebaseFirestore.instance
+          .collection('projects')
+          .doc(widget.projectId)
+          .update({'updatedAt': FieldValue.serverTimestamp()});
       // Batch commit
       await batch.commit();
 

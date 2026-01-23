@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:okoskert_internal/data/services/get_user_team_id.dart';
 import 'package:okoskert_internal/features/projects/project_details/project_data/project_data_images/ProjectImageFSView.dart';
 
 class ProjectImagesScreen extends StatefulWidget {
@@ -66,6 +65,11 @@ class _ProjectImagesScreenState extends State<ProjectImagesScreen> {
               'sectionName': sectionName,
               'uploadedAt': FieldValue.serverTimestamp(),
             });
+
+        await FirebaseFirestore.instance
+            .collection('projects')
+            .doc(widget.projectId)
+            .update({'updatedAt': FieldValue.serverTimestamp()});
 
         if (!mounted) return;
 
