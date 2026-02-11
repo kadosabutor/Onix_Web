@@ -143,6 +143,11 @@ class _CreateMachineScreenState extends State<CreateMachineScreen> {
                     border: OutlineInputBorder(),
                   ),
                 ),
+                Divider(),
+                Text(
+                  'Karbantartások',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
                 ListTile(
                   contentPadding: EdgeInsets.zero,
                   title: Row(
@@ -164,13 +169,6 @@ class _CreateMachineScreenState extends State<CreateMachineScreen> {
                     ],
                   ),
                 ),
-                // Karbantartások szekció
-                FilledButton.tonalIcon(
-                  onPressed: _addMaintenance,
-                  icon: const Icon(Icons.add),
-                  label: const Text('Karbantartás hozzáadása'),
-                ),
-                const SizedBox(height: 8),
                 // Karbantartások listája
                 ..._maintenances.map((maintenance) {
                   final nameController = maintenance['name']!;
@@ -195,7 +193,7 @@ class _CreateMachineScreenState extends State<CreateMachineScreen> {
                         ),
                         const SizedBox(width: 8),
                         Expanded(
-                          child: TextField(
+                          child: TextFormField(
                             controller: hoursController,
                             keyboardType: TextInputType.number,
                             decoration: const InputDecoration(
@@ -222,6 +220,11 @@ class _CreateMachineScreenState extends State<CreateMachineScreen> {
                     ),
                   );
                 }).toList(),
+                FilledButton.tonalIcon(
+                  onPressed: _addMaintenance,
+                  icon: const Icon(Icons.add),
+                  label: const Text('Karbantartás hozzáadása'),
+                ),
               ],
             ),
           ),
