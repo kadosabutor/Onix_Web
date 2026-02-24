@@ -4,6 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:okoskert_internal/data/services/get_user_team_id.dart';
 import 'package:okoskert_internal/features/warehouse/add_material_screen.dart';
 import 'package:okoskert_internal/features/warehouse/ui/material_details_bottom_sheet.dart';
+import 'package:okoskert_internal/features/warehouse/ui/material_list_tile.dart';
 
 class WarehouseScreen extends StatefulWidget {
   const WarehouseScreen({super.key});
@@ -140,52 +141,20 @@ class _WarehouseScreenState extends State<WarehouseScreen> {
                       final price = data['price'] as num?;
                       final projectId = data['projectId'] as String?;
 
-                      return Card(
-                        margin: const EdgeInsets.symmetric(
-                          horizontal: 8.0,
-                          vertical: 4.0,
-                        ),
-                        child: ListTile(
-                          leading: CircleAvatar(
-                            child: Icon(LucideIcons.package),
-                          ),
-                          title: Text(
-                            name,
-                            maxLines: 1,
-                            softWrap: false,
-                            overflow: TextOverflow.fade,
-                          ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Mennyiség: $quantity $unit'),
-                              if (price != null)
-                                Text(
-                                  'Ár: ${_formatPrice(price.toDouble())} HUF',
-                                ),
-                              if (projectId != null &&
-                                  projectsMap.containsKey(projectId))
-                                Text(
-                                  'Projekt: ${projectsMap[projectId]}',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color:
-                                        Theme.of(
-                                          context,
-                                        ).colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                            ],
-                          ),
-                          isThreeLine: true,
-                          onTap: () {
-                            MaterialDetailsBottomSheet.show(
-                              context,
-                              material,
-                              projectsMap,
-                            );
-                          },
-                        ),
+                      return MaterialListTile(
+                        name: name,
+                        quantity: quantity,
+                        unit: unit,
+                        price: price,
+                        projectName:
+                            projectId != null ? projectsMap[projectId] : null,
+                        onTap: () {
+                          MaterialDetailsBottomSheet.show(
+                            context,
+                            material,
+                            projectsMap,
+                          );
+                        },
                       );
                     },
                   );
@@ -208,19 +177,4 @@ class _WarehouseScreenState extends State<WarehouseScreen> {
     );
   }
 
-  String _formatPrice(double price) {
-    // Formázás 3 számjegyenkénti elválasztással szóközzel
-    final priceInt = price.toInt();
-    final priceStr = priceInt.toString();
-    final buffer = StringBuffer();
-
-    for (int i = 0; i < priceStr.length; i++) {
-      if (i > 0 && (priceStr.length - i) % 3 == 0) {
-        buffer.write(' ');
-      }
-      buffer.write(priceStr[i]);
-    }
-
-    return buffer.toString();
-  }
 }

@@ -6,8 +6,14 @@ import 'package:okoskert_internal/data/services/get_user_team_id.dart';
 class AddMaterialScreen extends StatefulWidget {
   final String? materialId;
   final Map<String, dynamic>? initialData;
+  final String? projectId;
 
-  const AddMaterialScreen({super.key, this.materialId, this.initialData});
+  const AddMaterialScreen({
+    super.key,
+    this.materialId,
+    this.initialData,
+    this.projectId,
+  });
 
   @override
   State<AddMaterialScreen> createState() => _AddMaterialScreenState();
@@ -72,6 +78,7 @@ class _AddMaterialScreenState extends State<AddMaterialScreen> {
   @override
   void initState() {
     super.initState();
+    _selectedProjectId = widget.projectId;
     _dateController = TextEditingController(text: _formatDate(_selectedDate));
     _quantityController.addListener(_onQuantityOrUnitPriceChanged);
     _unitPriceController.addListener(_onQuantityOrUnitPriceChanged);
@@ -384,7 +391,7 @@ class _AddMaterialScreenState extends State<AddMaterialScreen> {
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
           child: Form(
-            key: _formKey,           
+            key: _formKey,
             child: Column(
               spacing: 16,
               children: [

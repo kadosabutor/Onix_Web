@@ -4,6 +4,7 @@ import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
 import 'package:okoskert_internal/features/projects/project_details/project_data/project_data_collegues/ColleagueWorklogEntryEdit.dart';
 import 'package:okoskert_internal/features/projects/project_details/project_data/project_data_collegues/ProjectAddDataCollegues.dart';
 import 'package:okoskert_internal/features/projects/project_details/project_data/project_data_images/ProjectImages.dart';
+import 'package:okoskert_internal/features/projects/project_details/project_data/project_data_materials/project_data_materials_screen.dart';
 
 class ProjectDataScreen extends StatefulWidget {
   final String projectId;
@@ -26,7 +27,7 @@ class _ProjectDataScreenState extends State<ProjectDataScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   @override
@@ -47,13 +48,18 @@ class _ProjectDataScreenState extends State<ProjectDataScreen>
         ),
         bottom: TabBar(
           controller: _tabController,
-          tabs: const [Tab(text: 'Munkaórák'), Tab(text: 'Képek')],
+          tabs: const [
+            Tab(text: 'Munkaórák'),
+            Tab(text: 'Alapanyagok'),
+            Tab(text: 'Képek'),
+          ],
         ),
       ),
       body: TabBarView(
         controller: _tabController,
         children: [
           _buildDataTab(),
+          ProjectDataMaterialsScreen(projectId: widget.projectId),
           ProjectImagesScreen(projectId: widget.projectId),
         ],
       ),

@@ -16,12 +16,10 @@ class AddWorkHoursBottomSheet extends StatefulWidget {
 class _AddWorkHoursBottomSheetState extends State<AddWorkHoursBottomSheet> {
   final _formKey = GlobalKey<FormState>();
   final _newHoursController = TextEditingController();
-  final _currentHoursController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
   late TextEditingController _dateController;
   num _currentWorkHours = 0;
-  bool _isLoading = true;
-  bool _isSaving = false;
+  bool _isLoadingCurrentHours = true;
   bool _isProjectEnabled = false;
   String? _selectedProjectId;
   List<Map<String, String>> _projects = [];
@@ -30,7 +28,6 @@ class _AddWorkHoursBottomSheetState extends State<AddWorkHoursBottomSheet> {
   void initState() {
     super.initState();
     _dateController = TextEditingController(text: _formatDate(_selectedDate));
-    _currentHoursController.text = 'Betöltés...';
     _loadCurrentWorkHours();
     _loadProjects();
   }
@@ -38,7 +35,6 @@ class _AddWorkHoursBottomSheetState extends State<AddWorkHoursBottomSheet> {
   @override
   void dispose() {
     _newHoursController.dispose();
-    _currentHoursController.dispose();
     _dateController.dispose();
     super.dispose();
   }
@@ -56,22 +52,20 @@ class _AddWorkHoursBottomSheetState extends State<AddWorkHoursBottomSheet> {
         _currentWorkHours = data?['hours'] as num? ?? 0;
       }
       if (mounted) {
-        _currentHoursController.text = _currentWorkHours.toString();
+        setState(() {
+          _isLoadingCurrentHours = false;
+        });
       }
     } catch (error) {
       if (mounted) {
-        _currentHoursController.text = 'Hiba';
+        setState(() {
+          _isLoadingCurrentHours = false;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Hiba történt az adatok betöltésekor: $error'),
           ),
         );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
       }
     }
   }
@@ -113,6 +107,17 @@ class _AddWorkHoursBottomSheetState extends State<AddWorkHoursBottomSheet> {
     return '${date.year}. ${date.month.toString().padLeft(2, '0')}. ${date.day.toString().padLeft(2, '0')}.';
   }
 
+  String _formatHours(num value) {
+    final asDouble = value.toDouble();
+    return asDouble % 1 == 0
+        ? asDouble.toInt().toString()
+        : asDouble.toStringAsFixed(1);
+  }
+
+  double? _parseHours(String raw) {
+    return double.tryParse(raw.trim().replaceAll(',', '.'));
+  }
+
   Future<void> _selectDate() async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -132,12 +137,9 @@ class _AddWorkHoursBottomSheetState extends State<AddWorkHoursBottomSheet> {
     if (!_formKey.currentState!.validate()) {
       return;
     }
-    setState(() {
-      _isSaving = true;
-    });
 
     try {
-      final newHours = double.tryParse(_newHoursController.text.trim()) ?? 0.0;
+      final newHours = _parseHours(_newHoursController.text) ?? 0.0;
 
       await MachineWorkHoursService.saveWorkHours(
         machineId: widget.machineId,
@@ -158,12 +160,6 @@ class _AddWorkHoursBottomSheetState extends State<AddWorkHoursBottomSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Hiba történt a mentéskor: $error')),
       );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isSaving = false;
-        });
-      }
     }
   }
 
@@ -208,22 +204,61 @@ class _AddWorkHoursBottomSheetState extends State<AddWorkHoursBottomSheet> {
               onTap: _selectDate,
             ),
             const SizedBox(height: 16),
-            // Jelenlegi óraállás (nem szerkeszthető)
-            TextFormField(
-              controller: _currentHoursController,
-              readOnly: true,
-              enabled: false,
-              decoration: const InputDecoration(
-                labelText: 'Jelenlegi óraállás',
-                border: OutlineInputBorder(),
-              ),
+            ValueListenableBuilder<TextEditingValue>(
+              valueListenable: _newHoursController,
+              builder: (context, value, _) {
+                final parsedNewHours = _parseHours(value.text);
+                final diff =
+                    parsedNewHours != null
+                        ? parsedNewHours - _currentWorkHours
+                        : null;
+                return Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color:
+                        Theme.of(context).colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: _HoursValue(
+                          label: 'Jelenlegi',
+                          value:
+                              _isLoadingCurrentHours
+                                  ? 'Betöltés...'
+                                  : '${_formatHours(_currentWorkHours)} óra',
+                        ),
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 8),
+                        child: Icon(Icons.arrow_forward_rounded),
+                      ),
+                      Expanded(
+                        child: _HoursValue(
+                          label: 'Következő',
+                          value:
+                              parsedNewHours == null
+                                  ? 'Add meg az új óraállást'
+                                  : '${_formatHours(parsedNewHours)} óra',
+                          helper:
+                              diff == null
+                                  ? null
+                                  : '+${_formatHours(diff)} óra változás',
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
             const SizedBox(height: 16),
-            // Új óraállás (szerkeszthető)
             TextFormField(
               controller: _newHoursController,
               decoration: const InputDecoration(
                 labelText: 'Új óraállás',
+                hintText: 'Pl. 1245.5',
                 border: OutlineInputBorder(),
               ),
               keyboardType: const TextInputType.numberWithOptions(
@@ -233,16 +268,14 @@ class _AddWorkHoursBottomSheetState extends State<AddWorkHoursBottomSheet> {
                 if (value == null || value.trim().isEmpty) {
                   return 'Kérjük, adja meg az új óraállást';
                 }
-                if (double.tryParse(value.trim()) == null) {
+                final parsedValue = _parseHours(value);
+                if (parsedValue == null) {
                   return 'Kérjük, érvényes számot adjon meg';
                 }
-                if (value.isNotEmpty &&
-                    double.tryParse(value.trim())! <= _currentWorkHours) {
+                if (parsedValue <= _currentWorkHours) {
                   return 'Az új óraállás nem lehet kisebb, mint a jelenlegi óraállás';
                 }
-                if (value.isNotEmpty &&
-                    (double.tryParse(value.trim())! - _currentWorkHours).abs() >
-                        10) {
+                if ((parsedValue - _currentWorkHours).abs() > 10) {
                   return 'Az új óraállás nem lehet nagyobb, mint 10 óra';
                 }
                 return null;
@@ -312,6 +345,40 @@ class _AddWorkHoursBottomSheetState extends State<AddWorkHoursBottomSheet> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _HoursValue extends StatelessWidget {
+  final String label;
+  final String value;
+  final String? helper;
+
+  const _HoursValue({required this.label, required this.value, this.helper});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(value, style: Theme.of(context).textTheme.titleMedium),
+        if (helper != null) ...[
+          const SizedBox(height: 2),
+          Text(
+            helper!,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.primary,
+            ),
+          ),
+        ],
+      ],
     );
   }
 }

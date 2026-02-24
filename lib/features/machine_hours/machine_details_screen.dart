@@ -97,8 +97,6 @@ class _MachineDetailsScreenState extends State<MachineDetailsScreen> {
               ...(machineData['maintenances'] as List<dynamic>? ?? []),
             ];
 
-            final maintenancesDone = machineData['maintenanceLog'] ?? [];
-
             // Single StreamBuilder for workHoursLog - used for both header and list
             return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
               stream:

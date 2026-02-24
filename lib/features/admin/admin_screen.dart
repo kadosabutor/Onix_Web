@@ -3,9 +3,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:okoskert_internal/app/settings_screen.dart';
-import 'package:okoskert_internal/features/admin/join_requests_page.dart';
+import 'package:okoskert_internal/features/admin/collegues_management/colleagues_screen.dart';
+import 'package:okoskert_internal/features/admin/join_request/join_requests_page.dart';
 import 'package:okoskert_internal/features/admin/work_types_page.dart';
-import 'package:okoskert_internal/features/admin/colleagues_page.dart';
 import 'package:okoskert_internal/features/admin/admin_menu_tile.dart';
 import 'package:okoskert_internal/features/warehouse/warehouse_screen.dart';
 
@@ -216,14 +216,13 @@ class AdminPage extends StatelessWidget {
                         },
                       ),
                       AdminMenuTile(
-                        enabled: false,
                         icon: Icons.people,
-                        title: 'Munkatársak',
+                        title: 'Munkatársak kezelése',
                         onTap: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const ColleaguesPage(),
+                              builder: (context) => ColleaguesManagementPage(),
                             ),
                           );
                         },
@@ -237,8 +236,29 @@ class AdminPage extends StatelessWidget {
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          FirebaseAuth.instance.signOut();
+        onPressed: () async {
+          final confirmed = await showDialog<bool>(
+            context: context,
+            builder:
+                (context) => AlertDialog(
+                  title: const Text('Kijelentkezés'),
+                  content: const Text('Biztosan ki szeretnél jelentkezni?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text('Mégse'),
+                    ),
+                    FilledButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      child: const Text('Kijelentkezés'),
+                    ),
+                  ],
+                ),
+          );
+
+          if (confirmed == true) {
+            await FirebaseAuth.instance.signOut();
+          }
         },
         icon: const Icon(Icons.logout),
         label: const Text('Kijelentkezés'),
