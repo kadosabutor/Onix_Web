@@ -344,6 +344,9 @@ class EditWorklogBottomSheetState extends State<EditWorklogBottomSheet> {
             const SizedBox(height: 24),
             // Mentés gomb
             FilledButton(
+              style: FilledButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+              ),
               onPressed: _isSaving ? null : _saveChanges,
               child:
                   _isSaving
@@ -361,6 +364,9 @@ class EditWorklogBottomSheetState extends State<EditWorklogBottomSheet> {
             ),
             // Törlés gomb
             OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+              ),
               onPressed: _isSaving ? null : _deleteEntry,
               icon: const Icon(Icons.delete),
               label: const Text('Törlés'),

@@ -243,7 +243,7 @@ class _MaterialDetailsContent extends StatelessWidget {
               // Mennyiség információ
               _buildInfoRow(
                 context,
-                icon: LucideIcons.scale,
+                icon: LucideIcons.weight,
                 label: 'Mennyiség',
                 value: '$quantity $unit',
               ),

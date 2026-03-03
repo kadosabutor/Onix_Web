@@ -145,6 +145,79 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _showForgotPasswordDialog() async {
+    final resetEmailController = TextEditingController(
+      text: _emailController.text.trim(),
+    );
+
+    await showDialog<void>(
+      context: context,
+      builder:
+          (dialogContext) => AlertDialog(
+            title: const Text('Jelszó visszaállítása'),
+            content: TextField(
+              controller: resetEmailController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: const InputDecoration(
+                labelText: 'Email',
+                hintText: 'Add meg az email címed',
+                prefixIcon: Icon(Icons.email),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('Mégse'),
+              ),
+              FilledButton(
+                onPressed: () async {
+                  final email = resetEmailController.text.trim();
+
+                  if (email.isEmpty || !email.contains('@')) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Adj meg egy érvényes email címet'),
+                      ),
+                    );
+                    return;
+                  }
+
+                  try {
+                    await FirebaseAuth.instance.sendPasswordResetEmail(
+                      email: email,
+                    );
+                    if (!mounted) return;
+                    Navigator.of(dialogContext).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Jelszó-visszaállító email elküldve: $email',
+                        ),
+                      ),
+                    );
+                  } on FirebaseAuthException catch (e) {
+                    if (!mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(getLoginErrorMessage(e.code))),
+                    );
+                  } catch (_) {
+                    if (!mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Hiba történt az email küldése közben. Próbáld újra.',
+                        ),
+                      ),
+                    );
+                  }
+                },
+                child: const Text('Küldés'),
+              ),
+            ],
+          ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isRegisterMode = _selectedMode == 'Regisztráció';
@@ -240,6 +313,16 @@ class _LoginScreenState extends State<LoginScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
+                if (!isRegisterMode) ...[
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton(
+                      onPressed: _showForgotPasswordDialog,
+                      child: const Text('Elfelejtettem a jelszavamat'),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
                 if (isRegisterMode) ...[
                   TextFormField(
                     controller: _confirmPasswordController,

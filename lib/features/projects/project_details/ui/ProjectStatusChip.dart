@@ -115,6 +115,9 @@ class _ProjectStatusChipState extends State<ProjectStatusChip> {
                       SizedBox(
                         width: double.infinity,
                         child: FilledButton(
+                          style: FilledButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                          ),
                           onPressed: () {
                             _showConfirmDialog(
                               context,
