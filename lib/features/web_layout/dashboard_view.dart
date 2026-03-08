@@ -42,11 +42,12 @@ class DashboardView extends StatelessWidget {
           else
             Row(
               children: [
-                _buildMetricCard('Folyamatban lévő projektek', '12', Icons.engineering, Colors.blueAccent),
+                // JAVÍTVA: A szövegek most már pontosan a specifikációnak megfelelőek
+                _buildMetricCard('Folyamatban lévő projektek száma', '12', Icons.engineering, Colors.blueAccent),
                 const SizedBox(width: 16),
-                _buildMetricCard('Számlázásra váró projektek', '4', Icons.receipt_long, Colors.orange),
+                _buildMetricCard('Számlázásra váró projektek száma', '4', Icons.receipt_long, Colors.orange),
                 const SizedBox(width: 16),
-                _buildMetricCard('Aktív dolgozók ma', '8', Icons.people, Colors.green),
+                _buildMetricCard('Aktív dolgozók a mai napon', '8', Icons.people, Colors.green),
               ],
             ),
           
@@ -54,7 +55,7 @@ class DashboardView extends StatelessWidget {
 
           // Sürgős teendők szekció
           const Text(
-            'Sürgős Teendők (AI)',
+            'Sürgős Teendők',
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),

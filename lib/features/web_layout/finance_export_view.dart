@@ -19,12 +19,16 @@ class FinanceExportView extends StatelessWidget {
               ),
               ElevatedButton.icon(
                 onPressed: () {
+                  // JAVÍTVA: Pontosított visszajelzés az .xlsx letöltésről
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Riport generálása és letöltése folyamatban...'), backgroundColor: Colors.green),
+                    const SnackBar(
+                      content: Text('Pénzügyi riport letöltése folyamatban (riport.xlsx)...'), 
+                      backgroundColor: Colors.green
+                    ),
                   );
                 },
                 icon: const Icon(Icons.download),
-                label: const Text('Riport Generálása'), // Javítva a specifikáció szerint
+                label: const Text('Riport Generálása'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,
                   foregroundColor: Colors.white,
