@@ -15,6 +15,7 @@ import 'package:toastification/toastification.dart';
 import 'package:flutter/foundation.dart';
 import 'package:okoskert_internal/features/web_layout/web_main_layout.dart';
 import 'firebase_options.dart';
+import 'package:okoskert_internal/routes/web_router.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -54,10 +55,11 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
 
-    // In dev for web layout bypass
+    // ÚJ WEB ROUTER INTEGRÁLÁSA SÖTÉT TÉMÁVAL
     if (kIsWeb) {
-        return MaterialApp(
-            home: const WebMainLayout(),
+        return MaterialApp.router(
+            routerConfig: goRouter, // Ez jön a web_router.dart-ból! (Ne felejtsd el importálni)
+            theme: AppTheme.dark, // Kötelező sötét téma a webes panelhez
             debugShowCheckedModeBanner: false,
         );
     }

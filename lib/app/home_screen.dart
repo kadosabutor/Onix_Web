@@ -5,8 +5,6 @@ import 'package:okoskert_internal/features/admin/admin_screen.dart';
 import 'package:okoskert_internal/features/projects/projects_collector_screen.dart';
 import 'package:okoskert_internal/features/calendar/calendar_screen.dart';
 import 'package:okoskert_internal/app/profile_screen.dart';
-import 'package:flutter/foundation.dart';
-import 'package:okoskert_internal/features/web_layout/web_main_layout.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -25,10 +23,6 @@ class _HomePageState extends State<HomePage> {
       builder: (context, roleSnapshot) {
         final role = roleSnapshot.data;
         final isAdmin = role == 1;
-
-        if (kIsWeb) {
-          return const WebMainLayout();
-        }
 
         final pages = <Widget>[
           const Projectscollectorscreen(),

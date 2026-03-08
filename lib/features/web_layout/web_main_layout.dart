@@ -1,35 +1,27 @@
 import 'package:flutter/material.dart';
-
-// Importáljuk a többi nézetet
-import 'dashboard_view.dart';
-import 'projects_kanban_view.dart';
-import 'finance_export_view.dart';
-import 'communication_view.dart';
-import 'team_view.dart'; // EZT AZ ÚJ FÁJLT MAJD LÉTREHOZZUK
-
-// --- ARCULATI SZÍNEK (Design System) ---
-class OnixColors {
-  static const Color obsidianBlack = Color(0xFF0D1117);
-  static const Color deepEmerald = Color(0xFF0A3622);
-  static const Color cyberMint = Color(0xFF00D084);
-  static const Color pureWhite = Color(0xFFFFFFFF);
-  static const Color darkSurface = Color(0xFF161B22); // Picit világosabb fekete kártyáknak
-  static const Color textSecondary = Colors.white70;
-}
+import 'package:go_router/go_router.dart';
+import '../../app/app_theme.dart';
 
 class WebMainLayout extends StatefulWidget {
-  const WebMainLayout({super.key});
+  // A GoRouter adja át ezt a Shell-t, ez tartalmazza az aktuális oldalt
+  final StatefulNavigationShell navigationShell;
+
+  const WebMainLayout({super.key, required this.navigationShell});
 
   @override
   State<WebMainLayout> createState() => _WebMainLayoutState();
 }
 
 class _WebMainLayoutState extends State<WebMainLayout> {
-  int _selectedIndex = 0;
-  bool _isAdmin = false; // SZEREPKÖR VÁLTÓ ÁLLAPOTA (Irodai vs Tulajdonos)
-
-  // A kereső mező vezérlője
+  bool _isAdmin = false;
   final TextEditingController _searchController = TextEditingController();
+
+  void _goBranch(int index) {
+    widget.navigationShell.goBranch(
+      index,
+      initialLocation: index == widget.navigationShell.currentIndex,
+    );
+  }
 
   void _showNotificationDialog() {
     showDialog(
@@ -61,7 +53,7 @@ class _WebMainLayoutState extends State<WebMainLayout> {
           ],
         ),
         content: const Text(
-          'Miben segíthetek ma? (Pl. "Listázd az eheti lejárt projekteket", "Írj egy levelet Kovács Jánosnak")',
+          'Miben segíthetek ma? (Pl. "Listázd az eheti lejárt projekteket")',
           style: TextStyle(color: OnixColors.textSecondary, height: 1.5),
         ),
         actions: [
@@ -76,117 +68,98 @@ class _WebMainLayoutState extends State<WebMainLayout> {
 
   @override
   Widget build(BuildContext context) {
-    // Aloldalak inicializálása, átadva az isAdmin paramétert a Kanban-nak
-    final List<Widget> pages = [
-      const DashboardView(),
-      ProjectsKanbanView(isAdmin: _isAdmin),
-      const FinanceExportView(),
-      const CommunicationView(),
-      const TeamView(),
-    ];
+    // Képernyőszélesség vizsgálata a reszponzivitáshoz
+    final isDesktop = MediaQuery.of(context).size.width >= 1000;
 
     return Scaffold(
-      backgroundColor: OnixColors.obsidianBlack, // 60% sötét háttér dominancia
+      backgroundColor: OnixColors.obsidianBlack,
       body: Row(
         children: [
-          // BAL OLDALI MENÜSÁV (Deep Emerald a organikus mélységért)
-          Container(
-            width: 260,
+          // RESZPONZÍV BAL OLDALI MENÜSÁV
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 250),
+            width: isDesktop ? 260 : 80,
             color: OnixColors.deepEmerald,
             child: Column(
               children: [
-                // Logó és Márkajelzés (Negatív tér és modern letisztultság)
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+                  padding: EdgeInsets.symmetric(horizontal: isDesktop ? 24.0 : 8.0, vertical: 32.0),
                   child: Row(
+                    mainAxisAlignment: isDesktop ? MainAxisAlignment.start : MainAxisAlignment.center,
                     children: [
                       Container(
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: OnixColors.cyberMint, // 10% kiemelő szín
-                          borderRadius: BorderRadius.circular(12), // Biomorfikus finom ívek
+                          color: OnixColors.cyberMint,
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Icon(Icons.spa, color: OnixColors.obsidianBlack, size: 24), // Ide jön majd az új logó
+                        child: const Icon(Icons.spa, color: OnixColors.obsidianBlack, size: 24),
                       ),
-                      const SizedBox(width: 16),
-                      const Text(
-                        'ONIX',
-                        style: TextStyle(
-                          color: OnixColors.pureWhite,
-                          fontSize: 24,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 2.0, // Megnövelt betűköz a prémium hatásért
+                      if (isDesktop) const SizedBox(width: 16),
+                      if (isDesktop)
+                        const Text(
+                          'ONIX',
+                          style: TextStyle(
+                            color: OnixColors.pureWhite,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 2.0,
+                          ),
                         ),
-                      ),
                     ],
                   ),
                 ),
                 
                 // Menüpontok
-                _buildNavItem(Icons.dashboard_rounded, 'Vezérlőpult', 0),
-                _buildNavItem(Icons.view_kanban_rounded, 'CRM & Projektek', 1),
-                _buildNavItem(Icons.account_balance_wallet_rounded, 'Pénzügy / Export', 2),
-                _buildNavItem(Icons.forum_rounded, 'Kommunikáció', 3),
-                _buildNavItem(Icons.groups_rounded, 'Csapat', 4),
+                _buildNavItem(Icons.dashboard_rounded, 'Vezérlőpult', 0, isDesktop),
+                _buildNavItem(Icons.view_kanban_rounded, 'CRM & Projektek', 1, isDesktop),
+                _buildNavItem(Icons.account_balance_wallet_rounded, 'Pénzügy / Export', 2, isDesktop),
+                _buildNavItem(Icons.forum_rounded, 'Kommunikáció', 3, isDesktop),
+                _buildNavItem(Icons.groups_rounded, 'Csapat', 4, isDesktop),
 
                 const Spacer(),
 
-                // Szerepkör Váltó (Csak teszteléshez)
-                Container(
-                  margin: const EdgeInsets.all(16),
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: OnixColors.obsidianBlack.withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Szerepkör (Teszt)', style: TextStyle(color: OnixColors.textSecondary, fontSize: 10)),
-                          Text('Jogosultság váltás', style: TextStyle(color: OnixColors.pureWhite, fontSize: 12)),
-                        ],
-                      ),
-                      Switch(
-                        value: _isAdmin,
-                        activeColor: OnixColors.cyberMint,
-                        onChanged: (val) {
-                          setState(() {
-                            _isAdmin = val;
-                          });
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Szerepkör váltva: ${_isAdmin ? "Tulajdonos (Admin)" : "Irodai alkalmazott"}'),
-                              backgroundColor: OnixColors.cyberMint,
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Felhasználó profil része
+                // Profil és Szerepkör rész
                 const Divider(color: Colors.white12, height: 1),
-                ListTile(
-                  contentPadding: const EdgeInsets.all(16),
-                  leading: const CircleAvatar(
-                    backgroundColor: OnixColors.obsidianBlack,
-                    child: Icon(Icons.person_outline, color: OnixColors.cyberMint),
+                if (isDesktop) ...[
+                  Container(
+                    margin: const EdgeInsets.all(16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Admin nézet', style: TextStyle(color: OnixColors.textSecondary, fontSize: 12)),
+                        Switch(
+                          value: _isAdmin,
+                          activeColor: OnixColors.cyberMint,
+                          onChanged: (val) {
+                            setState(() => _isAdmin = val);
+                          },
+                        ),
+                      ],
+                    ),
                   ),
-                  title: Text(
-                    _isAdmin ? 'Tulajdonos' : 'Irodai Alkalmazott',
-                    style: const TextStyle(color: OnixColors.pureWhite, fontSize: 14, fontWeight: FontWeight.bold),
+                  ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    leading: const CircleAvatar(
+                      backgroundColor: OnixColors.obsidianBlack,
+                      child: Icon(Icons.person_outline, color: OnixColors.cyberMint),
+                    ),
+                    title: Text(
+                      _isAdmin ? 'Tulajdonos' : 'Irodai Alkalmazott',
+                      style: const TextStyle(color: OnixColors.pureWhite, fontSize: 13, fontWeight: FontWeight.bold),
+                    ),
+                    trailing: const Icon(Icons.logout, color: OnixColors.textSecondary, size: 20),
                   ),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.logout, color: OnixColors.textSecondary),
-                    onPressed: () {},
-                  ),
-                ),
+                ] else ...[
+                   const Padding(
+                     padding: EdgeInsets.symmetric(vertical: 24.0),
+                     child: CircleAvatar(
+                        backgroundColor: OnixColors.obsidianBlack,
+                        child: Icon(Icons.person_outline, color: OnixColors.cyberMint),
+                      ),
+                   )
+                ]
               ],
             ),
           ),
@@ -195,37 +168,28 @@ class _WebMainLayoutState extends State<WebMainLayout> {
           Expanded(
             child: Column(
               children: [
-                // Felső sáv (Kereső és Értesítések)
+                // Felső sáv
                 Container(
                   height: 80,
                   color: OnixColors.obsidianBlack,
                   padding: const EdgeInsets.symmetric(horizontal: 32.0),
                   child: Row(
                     children: [
-                      // Kereső szimuláció
                       Expanded(
                         child: Container(
                           height: 48,
                           decoration: BoxDecoration(
                             color: OnixColors.darkSurface,
-                            borderRadius: BorderRadius.circular(24), // Organikus forma
+                            borderRadius: BorderRadius.circular(24),
                             border: Border.all(color: Colors.white12),
                           ),
                           child: TextField(
                             controller: _searchController,
                             style: const TextStyle(color: OnixColors.pureWhite),
                             decoration: InputDecoration(
-                              hintText: 'Keresés ügyfelek, projektek vagy fájlok között...',
+                              hintText: isDesktop ? 'Keresés ügyfelek, projektek vagy fájlok között...' : 'Keresés...',
                               hintStyle: const TextStyle(color: OnixColors.textSecondary),
                               prefixIcon: const Icon(Icons.search, color: OnixColors.textSecondary),
-                              suffixIcon: IconButton(
-                                icon: const Icon(Icons.send, color: OnixColors.cyberMint, size: 20),
-                                onPressed: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Keresés: ${_searchController.text} (Hamarosan...)'), backgroundColor: OnixColors.deepEmerald),
-                                  );
-                                },
-                              ),
                               border: InputBorder.none,
                               contentPadding: const EdgeInsets.symmetric(vertical: 14),
                             ),
@@ -233,7 +197,6 @@ class _WebMainLayoutState extends State<WebMainLayout> {
                         ),
                       ),
                       const SizedBox(width: 32),
-                      // Értesítés ikon
                       Stack(
                         children: [
                           IconButton(
@@ -246,7 +209,7 @@ class _WebMainLayoutState extends State<WebMainLayout> {
                             child: Container(
                               width: 10,
                               height: 10,
-                              decoration: const BoxDecoration(color: OnixColors.cyberMint, shape: BoxShape.circle),
+                              decoration: const BoxDecoration(color: OnixColors.errorRed, shape: BoxShape.circle),
                             ),
                           ),
                         ],
@@ -255,15 +218,15 @@ class _WebMainLayoutState extends State<WebMainLayout> {
                   ),
                 ),
 
-                // Dinamikus tartalom
+                // Dinamikus tartalom betöltése a GoRouter-ből
                 Expanded(
                   child: Container(
                     decoration: const BoxDecoration(
                       color: OnixColors.darkSurface,
-                      borderRadius: BorderRadius.only(topLeft: Radius.circular(32)), // Finom átmenet
+                      borderRadius: BorderRadius.only(topLeft: Radius.circular(32)),
                     ),
                     clipBehavior: Clip.antiAlias,
-                    child: pages[_selectedIndex],
+                    child: widget.navigationShell, // Itt renderelődik ki az aktuális aloldal!
                   ),
                 ),
               ],
@@ -271,51 +234,57 @@ class _WebMainLayoutState extends State<WebMainLayout> {
           ),
         ],
       ),
-      // AI Asszisztens Gomb (Kibernetikus Menta kiemelés)
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showAIAssistantDialog,
-        backgroundColor: OnixColors.cyberMint,
-        foregroundColor: OnixColors.obsidianBlack,
-        icon: const Icon(Icons.auto_awesome),
-        label: const Text('AI Asszisztens', style: TextStyle(fontWeight: FontWeight.bold)),
-      ),
+      floatingActionButton: isDesktop 
+      ? FloatingActionButton.extended(
+          onPressed: _showAIAssistantDialog,
+          backgroundColor: OnixColors.cyberMint,
+          foregroundColor: OnixColors.obsidianBlack,
+          icon: const Icon(Icons.auto_awesome),
+          label: const Text('AI Asszisztens', style: TextStyle(fontWeight: FontWeight.bold)),
+        )
+      : FloatingActionButton(
+          onPressed: _showAIAssistantDialog,
+          backgroundColor: OnixColors.cyberMint,
+          foregroundColor: OnixColors.obsidianBlack,
+          child: const Icon(Icons.auto_awesome),
+        ),
     );
   }
 
-  Widget _buildNavItem(IconData icon, String title, int index) {
-    final isActive = _selectedIndex == index;
+  Widget _buildNavItem(IconData icon, String title, int index, bool isDesktop) {
+    final isActive = widget.navigationShell.currentIndex == index;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 16.0 : 8.0, vertical: 4.0),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
-          onTap: () {
-            setState(() {
-              _selectedIndex = index;
-            });
-          },
+          onTap: () => _goBranch(index),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+            padding: EdgeInsets.symmetric(horizontal: isDesktop ? 16.0 : 0, vertical: 16.0),
             decoration: BoxDecoration(
-              color: isActive ? OnixColors.obsidianBlack.withValues(alpha: 0.4) : Colors.transparent,
+              color: isActive ? OnixColors.obsidianBlack.withOpacity(0.4) : Colors.transparent,
               borderRadius: BorderRadius.circular(12),
-              border: isActive ? Border.all(color: OnixColors.cyberMint.withValues(alpha: 0.3)) : null,
+              border: isActive ? Border.all(color: OnixColors.cyberMint.withOpacity(0.3)) : null,
             ),
-            child: Row(
-              children: [
-                Icon(icon, color: isActive ? OnixColors.cyberMint : OnixColors.textSecondary, size: 22),
-                const SizedBox(width: 16),
-                Text(
-                  title,
-                  style: TextStyle(
-                    color: isActive ? OnixColors.pureWhite : OnixColors.textSecondary,
-                    fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-                    letterSpacing: 0.5,
+            child: isDesktop 
+                ? Row(
+                    children: [
+                      Icon(icon, color: isActive ? OnixColors.cyberMint : OnixColors.textSecondary, size: 22),
+                      const SizedBox(width: 16),
+                      Text(
+                        title,
+                        style: TextStyle(
+                          color: isActive ? OnixColors.pureWhite : OnixColors.textSecondary,
+                          fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  )
+                : Center(
+                    child: Icon(icon, color: isActive ? OnixColors.cyberMint : OnixColors.textSecondary, size: 24),
                   ),
-                ),
-              ],
-            ),
           ),
         ),
       ),

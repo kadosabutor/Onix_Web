@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import '../../app/app_theme.dart';
 
 class DashboardView extends StatelessWidget {
   const DashboardView({super.key});
 
-  // Szimuláljuk, hogy hiba történt az adatok lekérésekor a specifikáció szerint
   final bool _hasError = true; 
 
   @override
@@ -13,28 +13,27 @@ class DashboardView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Áttekintés',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 24),
           ),
           const SizedBox(height: 24),
           
-          // 3 Fő metrika vagy Hibaüzenet
           if (_hasError)
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.orange.shade50,
+                color: OnixColors.errorRed.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.orange.shade200),
+                border: Border.all(color: OnixColors.errorRed.withOpacity(0.3)),
               ),
               child: const Row(
                 children: [
-                  Icon(Icons.sync_problem, color: Colors.orange),
+                  Icon(Icons.sync_problem, color: OnixColors.errorRed),
                   SizedBox(width: 12),
                   Text(
                     'Adatok szinkronizálása folyamatban...',
-                    style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold, fontSize: 16),
+                    style: TextStyle(color: OnixColors.errorRed, fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                 ],
               ),
@@ -42,32 +41,34 @@ class DashboardView extends StatelessWidget {
           else
             Row(
               children: [
-                // JAVÍTVA: A szövegek most már pontosan a specifikációnak megfelelőek
                 _buildMetricCard('Folyamatban lévő projektek száma', '12', Icons.engineering, Colors.blueAccent),
                 const SizedBox(width: 16),
                 _buildMetricCard('Számlázásra váró projektek száma', '4', Icons.receipt_long, Colors.orange),
                 const SizedBox(width: 16),
-                _buildMetricCard('Aktív dolgozók a mai napon', '8', Icons.people, Colors.green),
+                _buildMetricCard('Aktív dolgozók a mai napon', '8', Icons.people, OnixColors.cyberMint),
               ],
             ),
           
           const SizedBox(height: 32),
 
-          // Sürgős teendők szekció
-          const Text(
+          Text(
             'Sürgős Teendők',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 20),
           ),
           const SizedBox(height: 16),
           Expanded(
             child: Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              elevation: 0,
+              color: OnixColors.darkSurface,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: const BorderSide(color: Colors.white12),
+              ),
               child: ListView(
                 padding: const EdgeInsets.all(8.0),
                 children: [
                   _buildUrgentTaskItem('Kovács János', 'AI e-mail piszkozat jóváhagyásra vár (Projekt elkészült)'),
-                  const Divider(),
+                  const Divider(color: Colors.white12),
                   _buildUrgentTaskItem('Tóth Kft.', 'AI e-mail piszkozat jóváhagyásra vár (Anyagköltség egyeztetés)'),
                 ],
               ),
@@ -81,15 +82,19 @@ class DashboardView extends StatelessWidget {
   Widget _buildMetricCard(String title, String value, IconData icon, Color color) {
     return Expanded(
       child: Card(
-        elevation: 2,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        elevation: 0,
+        color: OnixColors.darkSurface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: Colors.white12),
+        ),
         child: Padding(
           padding: const EdgeInsets.all(20.0),
           child: Row(
             children: [
               Container(
                 padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+                decoration: BoxDecoration(color: color.withOpacity(0.15), borderRadius: BorderRadius.circular(8)),
                 child: Icon(icon, color: color, size: 32),
               ),
               const SizedBox(width: 16),
@@ -97,9 +102,9 @@ class DashboardView extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: const TextStyle(fontSize: 14, color: Colors.grey)),
+                    Text(title, style: const TextStyle(fontSize: 14, color: OnixColors.textSecondary)),
                     const SizedBox(height: 4),
-                    Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                    Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: OnixColors.pureWhite)),
                   ],
                 ),
               ),
@@ -113,12 +118,12 @@ class DashboardView extends StatelessWidget {
   Widget _buildUrgentTaskItem(String customerName, String taskDesc) {
     return ListTile(
       leading: const CircleAvatar(
-        backgroundColor: Colors.redAccent,
-        child: Icon(Icons.warning_amber_rounded, color: Colors.white),
+        backgroundColor: OnixColors.errorRed,
+        child: Icon(Icons.warning_amber_rounded, color: OnixColors.pureWhite),
       ),
-      title: Text(customerName, style: const TextStyle(fontWeight: FontWeight.bold)),
-      subtitle: Text(taskDesc),
-      trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+      title: Text(customerName, style: const TextStyle(fontWeight: FontWeight.bold, color: OnixColors.pureWhite)),
+      subtitle: Text(taskDesc, style: const TextStyle(color: OnixColors.textSecondary)),
+      trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: OnixColors.textSecondary),
     );
   }
 }
