@@ -1,0 +1,8 @@
+{
+  "projects": {
+    "default": "okoskert-dev",
+    "web-tesz-onix": "onix-web-teszt"
+  },
+  "targets": {},
+  "etags": {}
+}
