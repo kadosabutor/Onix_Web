@@ -19,16 +19,12 @@ class FinanceExportView extends StatelessWidget {
               ),
               ElevatedButton.icon(
                 onPressed: () {
-                  // TODO: Valós Excel (.xlsx) generálás és letöltés megírása
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Riport generálása és letöltése folyamatban...'),
-                      backgroundColor: Colors.green,
-                    ),
+                    const SnackBar(content: Text('Riport generálása és letöltése folyamatban...'), backgroundColor: Colors.green),
                   );
                 },
                 icon: const Icon(Icons.download),
-                label: const Text('Excel Riport Generálása'),
+                label: const Text('Riport Generálása'), // Javítva a specifikáció szerint
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,
                   foregroundColor: Colors.white,
@@ -38,17 +34,12 @@ class FinanceExportView extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 24),
-          const Text(
-            'Kész (Számlázásra váró) projektek listája',
-            style: TextStyle(fontSize: 16, color: Colors.grey),
-          ),
+          const Text('Kész (Számlázásra váró) projektek listája', style: TextStyle(fontSize: 16, color: Colors.grey)),
           const SizedBox(height: 16),
           
-          // Projektek táblázata
           Expanded(
             child: Card(
               elevation: 2,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               child: ListView(
                 children: [
                   _buildFinanceRow('Térkövezés és füvesítés', 'Szabó Éva', '245 000 Ft', '120 000 Ft'),
@@ -66,10 +57,7 @@ class FinanceExportView extends StatelessWidget {
   Widget _buildFinanceRow(String project, String client, String materialCost, String laborCost) {
     return ListTile(
       contentPadding: const EdgeInsets.all(16),
-      leading: const CircleAvatar(
-        backgroundColor: Colors.greenAccent,
-        child: Icon(Icons.check, color: Colors.white),
-      ),
+      leading: const CircleAvatar(backgroundColor: Colors.greenAccent, child: Icon(Icons.check, color: Colors.white)),
       title: Text(project, style: const TextStyle(fontWeight: FontWeight.bold)),
       subtitle: Text('Ügyfél: $client'),
       trailing: Column(

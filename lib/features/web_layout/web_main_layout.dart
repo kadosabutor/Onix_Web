@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'dashboard_view.dart'; // Importáljuk az új nézetet
+
+// --- EZEK AZ IMPORTOK KELLEMEK A PIROS ALÁHÚZÁS ELTÜNTETÉSÉHEZ ---
+import 'dashboard_view.dart';
+import 'projects_kanban_view.dart';
+import 'finance_export_view.dart';
+import 'communication_view.dart';
+// ----------------------------------------------------------------
 
 class WebMainLayout extends StatefulWidget {
   const WebMainLayout({super.key});
@@ -10,16 +16,15 @@ class WebMainLayout extends StatefulWidget {
 }
 
 class _WebMainLayoutState extends State<WebMainLayout> {
-  // Ez a változó tárolja, melyik menüpont van kiválasztva
   int _selectedIndex = 0;
 
-  // Ide soroljuk fel a képernyőket, amik a középső részre kerülnek
+  // Az aloldalak listája a specifikáció alapján
   final List<Widget> _pages = [
     const DashboardView(),
-    const Center(child: Text('Ügyfelek & Projektek (Kanban tábla jön ide)', style: TextStyle(fontSize: 24))),
-    const Center(child: Text('Pénzügy / Számlázás (Export jön ide)', style: TextStyle(fontSize: 24))),
-    const Center(child: Text('Kommunikáció (Push / AI e-mail jön ide)', style: TextStyle(fontSize: 24))),
-    const Center(child: Text('Csapat nézet', style: TextStyle(fontSize: 24))),
+    const ProjectsKanbanView(),
+    const FinanceExportView(),
+    const CommunicationView(),
+    const Center(child: Text('Csapat nézet (Későbbi fejlesztés)', style: TextStyle(fontSize: 24))),
   ];
 
   @override
@@ -30,7 +35,7 @@ class _WebMainLayoutState extends State<WebMainLayout> {
           // Bal oldali menüsáv
           Container(
             width: 250,
-            color: const Color(0xFF1E1E2C), // Sötét téma
+            color: const Color(0xFF1E1E2C),
             child: Column(
               children: [
                 // Logó
@@ -51,27 +56,23 @@ class _WebMainLayoutState extends State<WebMainLayout> {
                       const SizedBox(width: 12),
                       const Text(
                         'Onix',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 16),
 
-                // Navigációs elemek
+                // Menüpontok
                 _buildNavItem(Icons.dashboard, 'Vezérlőpult', 0),
-                _buildNavItem(Icons.people, 'Ügyfelek & Projektek', 1),
+                _buildNavItem(Icons.view_kanban, 'Ügyfelek & Projektek', 1),
                 _buildNavItem(Icons.attach_money, 'Pénzügy / Számlázás', 2),
                 _buildNavItem(Icons.chat, 'Kommunikáció', 3),
                 _buildNavItem(Icons.group, 'Csapat', 4),
 
                 const Spacer(),
 
-                // Felhasználó & Kijelentkezés
+                // Felhasználó (RBAC: Irodai alkalmazott) és Kijelentkezés
                 const Divider(color: Colors.white24, height: 1),
                 ListTile(
                   leading: const CircleAvatar(
@@ -79,7 +80,7 @@ class _WebMainLayoutState extends State<WebMainLayout> {
                     child: Icon(Icons.person, color: Colors.white),
                   ),
                   title: const Text(
-                    'Irodai Alkalmazott', // Később ezt dinamikusan kérjük le (ACL)
+                    'Irodai Alkalmazott',
                     style: TextStyle(color: Colors.white, fontSize: 14),
                   ),
                   trailing: IconButton(
@@ -94,11 +95,11 @@ class _WebMainLayoutState extends State<WebMainLayout> {
             ),
           ),
 
-          // Fő tartalmi terület
+          // Jobb oldali fő terület
           Expanded(
             child: Column(
               children: [
-                // Felső sáv (Kereső és Értesítések)
+                // Felső keresősáv
                 Container(
                   height: 64,
                   color: Colors.white,
@@ -133,10 +134,7 @@ class _WebMainLayoutState extends State<WebMainLayout> {
                             child: Container(
                               width: 8,
                               height: 8,
-                              decoration: const BoxDecoration(
-                                color: Colors.red,
-                                shape: BoxShape.circle,
-                              ),
+                              decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
                             ),
                           ),
                         ],
@@ -145,7 +143,7 @@ class _WebMainLayoutState extends State<WebMainLayout> {
                   ),
                 ),
 
-                // Dinamikus tartalom (A kiválasztott menüpont alapján)
+                // Dinamikus tartalom (A kiválasztott oldal)
                 Expanded(
                   child: Container(
                     color: Colors.grey[100],
@@ -157,11 +155,9 @@ class _WebMainLayoutState extends State<WebMainLayout> {
           ),
         ],
       ),
-      // AI Asszisztens lebegő gombja
+      // AI Asszisztens Gomb
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // TODO: AI asszisztens chatablak megnyitása
-        },
+        onPressed: () {},
         backgroundColor: Colors.blueAccent,
         foregroundColor: Colors.white,
         tooltip: 'AI Asszisztens',
@@ -170,17 +166,12 @@ class _WebMainLayoutState extends State<WebMainLayout> {
     );
   }
 
-  // Módosított menüépítő függvény
   Widget _buildNavItem(IconData icon, String title, int index) {
     final isActive = _selectedIndex == index;
-
     return Material(
       color: Colors.transparent,
       child: ListTile(
-        leading: Icon(
-          icon,
-          color: isActive ? Colors.white : Colors.white54,
-        ),
+        leading: Icon(icon, color: isActive ? Colors.white : Colors.white54),
         title: Text(
           title,
           style: TextStyle(
