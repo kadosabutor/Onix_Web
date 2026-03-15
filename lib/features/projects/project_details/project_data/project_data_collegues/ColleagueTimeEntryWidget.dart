@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:okoskert_internal/core/utils/services/employee_service.dart';
+import 'package:onix_web/core/utils/services/employee_service.dart';
 
 class ColleagueTimeEntryWidget extends StatefulWidget {
   final Function(Map<String, dynamic>)? onChanged;

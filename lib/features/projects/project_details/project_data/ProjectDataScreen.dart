@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
-import 'package:okoskert_internal/features/projects/project_details/project_data/project_data_collegues/ColleagueWorklogEntryEdit.dart';
-import 'package:okoskert_internal/features/projects/project_details/project_data/project_data_collegues/ProjectAddDataCollegues.dart';
-import 'package:okoskert_internal/features/projects/project_details/project_data/project_data_images/ProjectImages.dart';
-import 'package:okoskert_internal/features/projects/project_details/project_data/project_data_materials/project_data_materials_screen.dart';
+import 'package:onix_web/features/projects/project_details/project_data/project_data_collegues/ColleagueWorklogEntryEdit.dart';
+import 'package:onix_web/features/projects/project_details/project_data/project_data_collegues/ProjectAddDataCollegues.dart';
+import 'package:onix_web/features/projects/project_details/project_data/project_data_images/ProjectImages.dart';
+import 'package:onix_web/features/projects/project_details/project_data/project_data_materials/project_data_materials_screen.dart';
 
 class ProjectDataScreen extends StatefulWidget {
   final String projectId;

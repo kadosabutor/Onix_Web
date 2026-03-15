@@ -1,367 +1,218 @@
-import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:okoskert_internal/data/services/get_user_team_id.dart';
-import 'package:okoskert_internal/features/machine_hours/machine_hours_screen.dart';
-import 'package:okoskert_internal/features/projects/create_project/create_project_screen.dart';
-import 'package:okoskert_internal/features/projects/project_details/project_data/ProjectDataScreen.dart';
-import 'package:okoskert_internal/features/projects/project_details/project_details_screen.dart';
-import 'package:okoskert_internal/features/projects/ui/ProjectTile.dart';
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+import 'package:onix_web/data/services/get_user_team_id.dart';
+import 'package:onix_web/features/projects/ui/ProjectTile.dart';
 
-class Projectscollectorscreen extends StatefulWidget {
-  const Projectscollectorscreen({super.key});
+class ProjectsCollectorScreen extends StatefulWidget {
+  const ProjectsCollectorScreen({super.key});
 
   @override
-  State<Projectscollectorscreen> createState() =>
-      _ProjectscollectorscreenState();
+  State<ProjectsCollectorScreen> createState() => _ProjectsCollectorScreenState();
 }
 
-enum SortOption { projectName, lastModified }
-
-class _ProjectscollectorscreenState extends State<Projectscollectorscreen>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-  List<QueryDocumentSnapshot<Map<String, dynamic>>> _allProjects = [];
-  final GlobalKey<ExpandableFabState> _expandableFabKey =
-      GlobalKey<ExpandableFabState>();
-  SortOption _selectedSortOption = SortOption.projectName;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 3, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
+class _ProjectsCollectorScreenState extends State<ProjectsCollectorScreen> {
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+    return DefaultTabController(
+      length: 3, // 3 fül a projekt állapotoknak
       child: Scaffold(
-        body: SafeArea(
-          minimum: EdgeInsets.all(8),
+        backgroundColor: Colors.transparent, // A hátteret a WebMainLayout biztosítja
+        body: Padding(
+          padding: const EdgeInsets.all(32.0), // 32px biztonsági sáv
           child: Column(
-            spacing: 8,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SearchAnchor.bar(
-                textCapitalization: TextCapitalization.sentences,
-                onClose: () {
-                  // Adding a frame delay ensures the focus doesn't
-                  // snap back to the search bar once the view is gone.
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    FocusScope.of(context).unfocus();
-                  });
-                },
-                barElevation: WidgetStateProperty.all(0),
-                barBackgroundColor: WidgetStateProperty.all(
-                  Theme.of(context).colorScheme.secondaryContainer,
-                ),
-                barHintText: "Keresés projektek között",
-                barLeading: const Icon(Icons.search),
-
-                suggestionsBuilder: (context, controller) {
-                  final query = controller.text.toLowerCase();
-
-                  if (query.isEmpty) {
-                    return const [];
-                  }
-                  final results =
-                      _allProjects.where((doc) {
-                        final data = doc.data();
-                        final name =
-                            (data['projectName'] ?? '')
-                                .toString()
-                                .toLowerCase();
-                        final customerName =
-                            (data['customerName'] ?? '')
-                                .toString()
-                                .toLowerCase();
-                        final projectLocation =
-                            (data['projectLocation'] ?? '')
-                                .toString()
-                                .toLowerCase();
-                        return name.contains(query) ||
-                            customerName.contains(query) ||
-                            projectLocation.contains(query);
-                      }).toList();
-
-                  return results.map((doc) {
-                    final data = doc.data();
-                    final projectId = doc.id;
-                    final projectName =
-                        data['projectName'] ?? 'Névtelen projekt';
-
-                    return ListTile(
-                      title: Text(projectName),
-                      leading: CircleAvatar(
-                        child: const Icon(Icons.construction_rounded),
-                      ),
-                      trailing: InkWell(
-                        onTap: () {
-                          WidgetsBinding.instance.addPostFrameCallback((_) {
-                            FocusScope.of(context).unfocus();
-                          });
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder:
-                                  (context) => ProjectDetailsScreen(
-                                    projectId: projectId,
-                                    projectName: projectName,
-                                  ),
-                            ),
-                          );
-                        },
-                        child: Icon(LucideIcons.info),
-                      ),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder:
-                                (_) => ProjectDataScreen(
-                                  projectId: projectId,
-                                  projectName: projectName,
-                                ),
-                          ),
-                        );
-                      },
-                    );
-                  }).toList();
-                },
-              ),
-
-              // Rendezési chip-ek
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
+              // --- 1. SaaS FEJLÉC (Header) ---
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  ChoiceChip(
-                    label: Text('Név szerint'),
-                    selected: _selectedSortOption == SortOption.projectName,
-                    onSelected: (selected) {
-                      if (selected) {
-                        setState(() {
-                          _selectedSortOption = SortOption.projectName;
-                        });
-                      }
-                    },
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text(
+                        'Projektek',
+                        style: TextStyle(
+                          fontFamily: 'Outfit',
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          letterSpacing: -1.0,
+                          height: 1.1,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        'A cég összes aktív és lezárt munkájának áttekintése.',
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 16,
+                          color: Color(0xFF9CA3AF),
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
                   ),
-                  ChoiceChip(
-                    label: Text('Utolsó módosítás'),
-                    selected: _selectedSortOption == SortOption.lastModified,
-                    onSelected: (selected) {
-                      if (selected) {
-                        setState(() {
-                          _selectedSortOption = SortOption.lastModified;
-                        });
-                      }
-                    },
+                  // Elsődleges CTA Gomb
+                  ElevatedButton.icon(
+                    onPressed: () => context.go('/projects/create'), // Útválasztás a létrehozáshoz
+                    icon: const Icon(LucideIcons.plus, size: 18, color: Color(0xFF0A0C10)),
+                    label: const Text(
+                      'Új Projekt',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF0A0C10),
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF00E5FF), // Brand accent color
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
                   ),
                 ],
               ),
+              const SizedBox(height: 32),
 
-              Expanded(
-                child: Column(
-                  children: [
-                    TabBar(
-                      dividerColor: Colors.transparent,
-                      controller: _tabController,
-                      tabs: [
-                        Tab(
-                          text: "Folyamatban",
-                          icon: Icon(LucideIcons.hammer),
-                        ),
-                        Tab(text: "Kész", icon: Icon(LucideIcons.circleCheck)),
-                        Tab(
-                          text: "Karbantartás",
-                          icon: Icon(LucideIcons.wrench),
-                        ),
-                      ],
-                    ),
-                    Expanded(
-                      child: FutureBuilder<String?>(
-                        future: UserService.getTeamId(),
-                        builder: (context, teamIdSnapshot) {
-                          if (teamIdSnapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            return const Center(
-                              child: CircularProgressIndicator(),
-                            );
-                          }
-
-                          final teamId = teamIdSnapshot.data;
-                          if (teamId == null || teamId.isEmpty) {
-                            return Center(
-                              child: Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: Text(
-                                  'Hiba: nem található teamId',
-                                  style: TextStyle(
-                                    color: Theme.of(context).colorScheme.error,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
-                            );
-                          }
-
-                          return StreamBuilder<
-                            QuerySnapshot<Map<String, dynamic>>
-                          >(
-                            stream:
-                                FirebaseFirestore.instance
-                                    .collection('projects')
-                                    .where('teamId', isEqualTo: teamId)
-                                    .snapshots(),
-                            builder: (context, snapshot) {
-                              if (snapshot.connectionState ==
-                                  ConnectionState.waiting) {
-                                return const Center(
-                                  child: CircularProgressIndicator(),
-                                );
-                              }
-
-                              if (snapshot.hasError) {
-                                return Center(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(16.0),
-                                    child: Text(
-                                      'Hiba történt a projektek betöltésekor: ${snapshot.error}',
-                                      style: TextStyle(
-                                        color:
-                                            Theme.of(context).colorScheme.error,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ),
-                                );
-                              }
-
-                              final allDocs = snapshot.data?.docs ?? [];
-                              _allProjects = allDocs;
-
-                              // Rendezés alkalmazása
-                              final sortedDocs = List<
-                                QueryDocumentSnapshot<Map<String, dynamic>>
-                              >.from(allDocs);
-                              sortedDocs.sort((a, b) {
-                                final dataA = a.data();
-                                final dataB = b.data();
-
-                                if (_selectedSortOption ==
-                                    SortOption.projectName) {
-                                  final nameA =
-                                      (dataA['projectName'] ?? '')
-                                          .toString()
-                                          .toLowerCase();
-                                  final nameB =
-                                      (dataB['projectName'] ?? '')
-                                          .toString()
-                                          .toLowerCase();
-                                  return nameA.compareTo(nameB);
-                                } else {
-                                  // Utolsó módosítás szerint
-                                  final updatedAtA =
-                                      dataA['updatedAt'] as Timestamp?;
-                                  final updatedAtB =
-                                      dataB['updatedAt'] as Timestamp?;
-
-                                  if (updatedAtA == null &&
-                                      updatedAtB == null) {
-                                    return 0;
-                                  }
-                                  if (updatedAtA == null) return 1;
-                                  if (updatedAtB == null) return -1;
-
-                                  // Újabb dátum előrébb (csökkenő sorrend)
-                                  return updatedAtB.compareTo(updatedAtA);
-                                }
-                              });
-
-                              return TabBarView(
-                                controller: _tabController,
-                                children: [
-                                  buildProjectList(sortedDocs, "ongoing"),
-                                  buildProjectList(sortedDocs, "done"),
-                                  buildProjectList(sortedDocs, "maintenance"),
-                                ],
-                              );
-                            },
-                          );
-                        },
-                      ),
-                    ),
+              // --- 2. FÜLEK (Tabs - Progressive Disclosure) ---
+              Container(
+                decoration: const BoxDecoration(
+                  border: Border(bottom: BorderSide(color: Color(0xFF1C202B), width: 2)), // Finom alapvonal
+                ),
+                child: TabBar(
+                  isScrollable: true,
+                  tabAlignment: TabAlignment.start,
+                  indicatorColor: const Color(0xFF00E5FF),
+                  indicatorWeight: 3,
+                  labelColor: Colors.white,
+                  unselectedLabelColor: const Color(0xFF6B7280),
+                  labelStyle: const TextStyle(fontFamily: 'Inter', fontSize: 15, fontWeight: FontWeight.w600),
+                  unselectedLabelStyle: const TextStyle(fontFamily: 'Inter', fontSize: 15, fontWeight: FontWeight.w500),
+                  dividerColor: Colors.transparent, // Lose the lines
+                  tabs: const [
+                    Tab(text: 'Folyamatban'),
+                    Tab(text: 'Várakozik'),
+                    Tab(text: 'Befejezett (Kész)'),
                   ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // --- 3. TARTALOM (TabBarView beépített lekérdezésekkel) ---
+              Expanded(
+                child: FutureBuilder<String?>(
+                  future: UserService.getTeamId(),
+                  builder: (context, teamSnapshot) {
+                    if (!teamSnapshot.hasData) return const Center(child: CircularProgressIndicator(color: Color(0xFF00E5FF)));
+                    final teamId = teamSnapshot.data;
+
+                    return TabBarView(
+                      children: [
+                        _buildProjectList(teamId, 'in_progress'), // Folyamatban
+                        _buildProjectList(teamId, 'waiting'),     // Várakozik
+                        _buildProjectList(teamId, 'completed'),   // Kész
+                      ],
+                    );
+                  },
                 ),
               ),
             ],
           ),
         ),
-        floatingActionButtonLocation: ExpandableFab.location,
-        floatingActionButton: FutureBuilder<int?>(
-          future: UserService.getRole(),
-          builder: (context, roleSnapshot) {
-            final role = roleSnapshot.data;
+      ),
+    );
+  }
 
-            return ExpandableFab(
-              key: _expandableFabKey,
-              type: ExpandableFabType.up,
-              childrenAnimation: ExpandableFabAnimation.none,
-              distance: 70,
-              overlayStyle: ExpandableFabOverlayStyle(
-                color: Theme.of(
-                  context,
-                ).colorScheme.surfaceContainerLow.withValues(alpha: 0.7),
-              ),
-              children: [
-                Row(
-                  children: [
-                    FloatingActionButton.extended(
-                      label: Text('Munkagépek kezelése'),
-                      heroTag: null,
-                      icon: Icon(Icons.av_timer),
-                      onPressed: () {
-                        _expandableFabKey.currentState?.close();
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => MachineHoursScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-                if (role == 1)
-                  Row(
-                    children: [
-                      FloatingActionButton.extended(
-                        label: Text('Új projekt létrehozása'),
-                        heroTag: null,
-                        onPressed: () {
-                          _expandableFabKey.currentState?.close();
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => CreateProjectScreen(),
-                            ),
-                          );
-                        },
-                        icon: Icon(Icons.add),
-                      ),
-                    ],
-                  ),
-              ],
+  // --- Projekt Lista Építő (Újrahasznosítható a fülekhez) ---
+  Widget _buildProjectList(String? teamId, String filterStatus) {
+    if (teamId == null) return const SizedBox();
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('projects')
+          .where('teamId', isEqualTo: teamId)
+          // Ha már van 'status' mező az adatbázisban, élesítsük be ezt:
+          // .where('status', isEqualTo: filterStatus)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator(color: Color(0xFF00E5FF)));
+        }
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return _buildEmptyState();
+        }
+
+        final projects = snapshot.data!.docs;
+
+        // Ideiglenes kliens-oldali szűrés, ha a Firestore index/query még nincs beállítva
+        // Éles környezetben ezt a .where() oldja meg a lekérdezésben!
+        final filteredProjects = projects.where((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          final status = data['status'] ?? 'in_progress';
+          return status == filterStatus;
+        }).toList();
+
+        if (filteredProjects.isEmpty) {
+          return _buildEmptyState();
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.only(bottom: 32),
+          physics: const BouncingScrollPhysics(),
+          itemCount: filteredProjects.length,
+          itemBuilder: (context, index) {
+            final doc = filteredProjects[index];
+            final data = doc.data() as Map<String, dynamic>;
+
+            return ProjectTile(
+              title: data['projectName'] ?? 'Névtelen Projekt',
+              address: data['projectAddress'] ?? 'Nincs cím megadva',
+              status: filterStatus,
+              onTap: () {
+                // A projekt részleteire navigál az adott ID-val
+                // Példa: context.go('/projects/${doc.id}');
+                // Most egy egyszerű navigációt hívunk:
+                context.go('/projects/details', extra: doc.id); 
+              },
             );
           },
-        ),
+        );
+      },
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(LucideIcons.folderOpen, size: 64, color: Color(0xFF374151)),
+          const SizedBox(height: 16),
+          const Text(
+            'Nincsenek projektek ebben a kategóriában',
+            style: TextStyle(
+              fontFamily: 'Outfit',
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Kattints az "Új Projekt" gombra a kezdéshez.',
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 14,
+              color: Color(0xFF9CA3AF),
+            ),
+          ),
+        ],
       ),
     );
   }

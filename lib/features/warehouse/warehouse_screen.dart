@@ -1,10 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:okoskert_internal/data/services/get_user_team_id.dart';
-import 'package:okoskert_internal/features/warehouse/add_material_screen.dart';
-import 'package:okoskert_internal/features/warehouse/ui/material_details_bottom_sheet.dart';
-import 'package:okoskert_internal/features/warehouse/ui/material_list_tile.dart';
+import 'package:onix_web/data/services/get_user_team_id.dart';
+import 'package:onix_web/features/warehouse/add_material_screen.dart';
+import 'package:onix_web/features/warehouse/ui/material_details_bottom_sheet.dart';
+import 'package:onix_web/features/warehouse/ui/material_list_tile.dart';
 
 class WarehouseScreen extends StatefulWidget {
   const WarehouseScreen({super.key});
@@ -17,165 +17,230 @@ class _WarehouseScreenState extends State<WarehouseScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Raktár')),
-      body: FutureBuilder<String?>(
-        future: UserService.getTeamId(),
-        builder: (context, teamIdSnapshot) {
-          if (teamIdSnapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          final teamId = teamIdSnapshot.data;
-          if (teamId == null || teamId.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Text(
-                  'Hiba: nem található teamId',
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
-                  textAlign: TextAlign.center,
+      backgroundColor: Colors.transparent, // A hátteret a WebMainLayout adja
+      body: Padding(
+        padding: const EdgeInsets.all(32.0), // Szigorú 8px-es szorzó (32px padding)
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // --- SaaS FEJLÉC (Header) ---
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Katalógus',
+                      style: TextStyle(
+                        fontFamily: 'Outfit', // Display betűtípus
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        letterSpacing: -1.0, // Matematikai tipográfia: negatív kerning a nagy címeken
+                        height: 1.1,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'Alapanyagok és egységárak központi nyilvántartása a számlázáshoz.',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 14,
+                        color: Color(0xFF9CA3AF),
+                        height: 1.5, // 150% sor-magasság olvashatóságért
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            );
-          }
-
-          return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-            stream:
-                FirebaseFirestore.instance
-                    .collection('projects')
-                    .where('teamId', isEqualTo: teamId)
-                    .snapshots(),
-            builder: (context, projectsSnapshot) {
-              // Projektek Map-ben tárolása (ID -> név)
-              final projectsMap = <String, String>{};
-              if (projectsSnapshot.hasData) {
-                for (final doc in projectsSnapshot.data!.docs) {
-                  final data = doc.data();
-                  projectsMap[doc.id] =
-                      data['projectName'] as String? ?? 'Névtelen projekt';
-                }
-              }
-
-              return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                stream:
-                    FirebaseFirestore.instance
-                        .collection('materials')
-                        .where('teamId', isEqualTo: teamId)
-                        .snapshots(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-
-                  if (snapshot.hasError) {
-                    debugPrint(
-                      'Hiba történt az alapanyagok betöltésekor: ${snapshot.error}',
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const AddMaterialScreen()),
                     );
-                    return Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Text(
-                          'Hiba történt az alapanyagok betöltésekor: ${snapshot.error}',
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.error,
-                          ),
-                          textAlign: TextAlign.center,
+                  },
+                  icon: const Icon(LucideIcons.plus, size: 18, color: Color(0xFF0A0C10)),
+                  label: const Text(
+                    'Új alapanyag',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF0A0C10),
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF00E5FF), // Brand accent color
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    elevation: 0, // Nincs "olcsó" árnyék
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 32),
+
+            // --- TÁBLÁZAT (Data Table Area) ---
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0A0C10), // Mélyebb háttér (Hue shift) a lista területének
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Column(
+                  children: [
+                    // Oszlop-fejlécek
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+                      decoration: const BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(color: Color(0xFF1C202B), width: 1), // Egyetlen finom elválasztó
                         ),
                       ),
-                    );
-                  }
-
-                  final materials = snapshot.data?.docs ?? [];
-
-                  if (materials.isEmpty) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      child: const Row(
                         children: [
-                          Icon(
-                            LucideIcons.package,
-                            size: 64,
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
+                          Expanded(
+                            flex: 3,
+                            child: Text('ALAPANYAG MEGNEVEZÉSE', style: _tableHeaderStyle),
                           ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Nincsenek alapanyagok',
-                            style: Theme.of(
-                              context,
-                            ).textTheme.titleLarge?.copyWith(
-                              color:
-                                  Theme.of(
-                                    context,
-                                  ).colorScheme.onSurfaceVariant,
-                            ),
+                          Expanded(
+                            flex: 2,
+                            child: Text('MÉRTÉKEGYSÉG', style: _tableHeaderStyle),
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Kattints az "Alapanyag hozzáadása" gombra a kezdéshez',
-                            style: Theme.of(
-                              context,
-                            ).textTheme.bodyMedium?.copyWith(
-                              color:
-                                  Theme.of(
-                                    context,
-                                  ).colorScheme.onSurfaceVariant,
-                            ),
-                            textAlign: TextAlign.center,
+                          Expanded(
+                            flex: 2,
+                            child: Text('EGYSÉGÁR', style: _tableHeaderStyle),
                           ),
+                          SizedBox(width: 16), // Helykihagyás a nyílnak
                         ],
                       ),
-                    );
-                  }
+                    ),
 
-                  return ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    itemCount: materials.length,
-                    itemBuilder: (context, index) {
-                      final material = materials[index];
-                      final data = material.data();
-                      final name =
-                          data['name'] as String? ?? 'Névtelen alapanyag';
-                      final quantity = data['quantity'] as num? ?? 0.0;
-                      final unit = data['unit'] as String? ?? '';
-                      final price = data['price'] as num?;
-                      final projectId = data['projectId'] as String?;
+                    // Lista
+                    Expanded(
+                      child: FutureBuilder<String?>(
+                        future: UserService.getTeamId(),
+                        builder: (context, teamIdSnapshot) {
+                          if (teamIdSnapshot.connectionState == ConnectionState.waiting) {
+                            return const Center(child: CircularProgressIndicator(color: Color(0xFF00E5FF)));
+                          }
 
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4.0),
-                        child: MaterialListTile(
-                          name: name,
-                          quantity: quantity,
-                          unit: unit,
-                          price: price,
-                          projectName:
-                              projectId != null ? projectsMap[projectId] : null,
-                          onTap: () {
-                            MaterialDetailsBottomSheet.show(
-                              context,
-                              material,
-                              projectsMap,
-                            );
-                          },
-                        ),
-                      );
-                    },
-                  );
-                },
-              );
-            },
-          );
-        },
+                          final teamId = teamIdSnapshot.data;
+                          if (teamId == null || teamId.isEmpty) {
+                            return _buildErrorState('Hiba: nem található teamId');
+                          }
+
+                          return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                            stream: FirebaseFirestore.instance
+                                .collection('materials')
+                                .where('teamId', isEqualTo: teamId)
+                                .snapshots(),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState == ConnectionState.waiting) {
+                                return const Center(child: CircularProgressIndicator(color: Color(0xFF00E5FF)));
+                              }
+
+                              if (snapshot.hasError) {
+                                return _buildErrorState('Hiba történt az alapanyagok betöltésekor.');
+                              }
+
+                              final materials = snapshot.data?.docs ?? [];
+
+                              if (materials.isEmpty) {
+                                return _buildEmptyState();
+                              }
+
+                              return ListView.builder(
+                                itemCount: materials.length,
+                                itemBuilder: (context, index) {
+                                  final material = materials[index];
+                                  final data = material.data();
+                                  
+                                  final name = data['name'] as String? ?? 'Névtelen alapanyag';
+                                  final unit = data['unit'] as String? ?? '-';
+                                  final price = data['price'] as num?;
+
+                                  return MaterialListTile(
+                                    name: name,
+                                    unit: unit,
+                                    price: price,
+                                    isEvenRow: index % 2 == 0, // Zebra csíkozás logikája
+                                    onTap: () {
+                                      // Részletek megnyitása (Üres Map-et adunk át, mert leválasztottuk a projektekről)
+                                      MaterialDetailsBottomSheet.show(
+                                        context,
+                                        material,
+                                        {}, 
+                                      );
+                                    },
+                                  );
+                                },
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        label: const Text('Alapanyag hozzáadása'),
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const AddMaterialScreen()),
-          );
-        },
-        icon: Icon(LucideIcons.packagePlus),
+    );
+  }
+
+  // --- Segéd komponensek ---
+
+  static const TextStyle _tableHeaderStyle = TextStyle(
+    fontFamily: 'Inter',
+    fontSize: 12,
+    fontWeight: FontWeight.w600,
+    letterSpacing: 0.5,
+    color: Color(0xFF6B7280),
+  );
+
+  Widget _buildErrorState(String message) {
+    return Center(
+      child: Text(
+        message,
+        style: const TextStyle(color: Colors.redAccent, fontFamily: 'Inter'),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(LucideIcons.packageOpen, size: 64, color: Color(0xFF374151)),
+          const SizedBox(height: 16),
+          const Text(
+            'A katalógus üres',
+            style: TextStyle(
+              fontFamily: 'Outfit',
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Töltsd fel a raktárt alapanyagokkal és azok áraival\na számlázás automatizálásához.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 14,
+              color: Color(0xFF9CA3AF),
+              height: 1.5,
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:okoskert_internal/data/services/get_user_team_id.dart';
-import 'package:okoskert_internal/features/admin/admin_screen.dart';
-import 'package:okoskert_internal/features/projects/projects_collector_screen.dart';
-import 'package:okoskert_internal/features/calendar/calendar_screen.dart';
-import 'package:okoskert_internal/app/profile_screen.dart';
+import 'package:onix_web/data/services/get_user_team_id.dart';
+import 'package:onix_web/features/admin/admin_screen.dart';
+import 'package:onix_web/features/projects/projects_collector_screen.dart';
+import 'package:onix_web/features/calendar/calendar_screen.dart';
+import 'package:onix_web/app/profile_screen.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});

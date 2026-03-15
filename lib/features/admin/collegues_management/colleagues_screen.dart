@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:okoskert_internal/data/services/users_services.dart';
+import 'package:onix_web/data/services/users_services.dart';
 
 class ColleaguesManagementPage extends StatelessWidget {
   const ColleaguesManagementPage({super.key});

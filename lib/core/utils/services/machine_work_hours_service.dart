@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:okoskert_internal/data/services/get_user_team_id.dart';
+import 'package:onix_web/data/services/get_user_team_id.dart';
 
 enum MaintenanceStatus { active, done }
 

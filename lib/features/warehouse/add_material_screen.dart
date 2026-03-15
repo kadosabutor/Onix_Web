@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:okoskert_internal/data/services/get_user_team_id.dart';
-import 'package:okoskert_internal/features/warehouse/add_material_helpers.dart';
+import 'package:onix_web/data/services/get_user_team_id.dart';
+import 'package:onix_web/features/warehouse/add_material_helpers.dart';
 
 class AddMaterialScreen extends StatefulWidget {
   final String? materialId;

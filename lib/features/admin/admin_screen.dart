@@ -2,12 +2,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:okoskert_internal/app/settings_screen.dart';
-import 'package:okoskert_internal/features/admin/collegues_management/colleagues_screen.dart';
-import 'package:okoskert_internal/features/admin/join_request/join_requests_page.dart';
-import 'package:okoskert_internal/features/admin/work_types_page.dart';
-import 'package:okoskert_internal/features/admin/admin_menu_tile.dart';
-import 'package:okoskert_internal/features/warehouse/warehouse_screen.dart';
+import 'package:onix_web/app/settings_screen.dart';
+import 'package:onix_web/features/admin/collegues_management/colleagues_screen.dart';
+import 'package:onix_web/features/admin/join_request/join_requests_page.dart';
+import 'package:onix_web/features/admin/work_types_page.dart';
+import 'package:onix_web/features/admin/admin_menu_tile.dart';
+import 'package:onix_web/features/warehouse/warehouse_screen.dart';
 
 class AdminPage extends StatelessWidget {
   const AdminPage({super.key});

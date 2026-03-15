@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:okoskert_internal/features/warehouse/add_material_screen.dart';
+import 'package:onix_web/features/warehouse/add_material_screen.dart';
 
 class MaterialDetailsBottomSheet {
   static Future<void> show(

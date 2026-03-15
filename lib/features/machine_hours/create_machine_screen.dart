@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:okoskert_internal/core/utils/services/machine_work_hours_service.dart';
-import 'package:okoskert_internal/data/services/get_user_team_id.dart';
+import 'package:onix_web/core/utils/services/machine_work_hours_service.dart';
+import 'package:onix_web/data/services/get_user_team_id.dart';
 
 class CreateMachineScreen extends StatefulWidget {
   const CreateMachineScreen({super.key});

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:okoskert_internal/features/projects/project_details/project_data/project_data_collegues/ColleagueTimeEntryWidget.dart';
+import 'package:onix_web/features/projects/project_details/project_data/project_data_collegues/ColleagueTimeEntryWidget.dart';
 
 class ProjectAddDataCollegues extends StatefulWidget {
   final String projectId;

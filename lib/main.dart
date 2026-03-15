@@ -3,19 +3,19 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:okoskert_internal/app/home_screen.dart';
-import 'package:okoskert_internal/app/app_theme.dart';
-import 'package:okoskert_internal/app/theme_provider.dart';
+import 'package:onix_web/app/home_screen.dart';
+import 'package:onix_web/app/app_theme.dart';
+import 'package:onix_web/app/theme_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:okoskert_internal/features/auth/login_screen.dart';
-import 'package:okoskert_internal/features/auth/create_new_workspace_screen.dart';
+import 'package:onix_web/features/auth/login_screen.dart';
+import 'package:onix_web/features/auth/create_new_workspace_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:toastification/toastification.dart';
 import 'package:flutter/foundation.dart';
-import 'package:okoskert_internal/features/web_layout/web_main_layout.dart';
+import 'package:onix_web/features/web_layout/web_main_layout.dart';
 import 'firebase_options.dart';
-import 'package:okoskert_internal/routes/web_router.dart';
+import 'package:onix_web/routes/web_router.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

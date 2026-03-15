@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:okoskert_internal/app/theme_provider.dart';
+import 'package:onix_web/app/theme_provider.dart';
 import 'package:provider/provider.dart';
 
 class SettingsScreen extends StatefulWidget {

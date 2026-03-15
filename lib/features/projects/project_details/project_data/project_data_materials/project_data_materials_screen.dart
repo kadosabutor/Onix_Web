@@ -1,10 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:okoskert_internal/data/services/materials_services.dart';
-import 'package:okoskert_internal/features/warehouse/add_material_screen.dart';
-import 'package:okoskert_internal/features/warehouse/ui/material_details_bottom_sheet.dart';
-import 'package:okoskert_internal/features/warehouse/ui/material_list_tile.dart';
+import 'package:onix_web/data/services/materials_services.dart';
+import 'package:onix_web/features/warehouse/add_material_screen.dart';
+import 'package:onix_web/features/warehouse/ui/material_details_bottom_sheet.dart';
+import 'package:onix_web/features/warehouse/ui/material_list_tile.dart';
 
 class ProjectDataMaterialsScreen extends StatefulWidget {
   final String projectId;
